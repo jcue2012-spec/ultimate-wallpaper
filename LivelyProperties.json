@@ -3,48 +3,28 @@
     "text": "Image Provider",
     "type": "dropdown",
     "value": 0,
-    "items": [
-      "Wallhaven",
-      "Bing Images",
-      "Windows Spotlight",
-      "NASA APOD",
-      "Unsplash"
-    ]
-  },
-  "cacheHours": {
-    "text": "API Cache Duration (Hours)",
-    "type": "slider",
-    "value": 12,
-    "min": 1,
-    "max": 24,
-    "step": 1
-  },
-  "bgInterval": {
-    "text": "Wallpaper Cycle (Minutes)",
-    "type": "slider",
-    "value": 3,
-    "min": 1,
-    "max": 60,
-    "step": 1
+    "items": ["Wallhaven", "Bing Images", "Windows Spotlight", "NASA APOD", "Unsplash"]
   },
   "wallhavenCategory": {
     "text": "Wallhaven Category",
     "type": "dropdown",
     "value": 0,
-    "items": [
-      "General Only",
-      "Anime Only",
-      "People Only",
-      "General + Anime",
-      "General + People",
-      "Anime + People",
-      "Everything"
-    ]
+    "items": ["General", "Anime", "People", "Everything"]
+  },
+  "cacheHours": {
+    "text": "Refresh Batch Every (Hours)",
+    "type": "slider",
+    "value": 12, "min": 1, "max": 24, "step": 1
+  },
+  "bgInterval": {
+    "text": "Wallpaper Cycle (Minutes)",
+    "type": "slider",
+    "value": 3, "min": 1, "max": 60, "step": 1
   },
   "unsplashKey": {
     "text": "Unsplash Access Key",
     "type": "textbox",
-    "value": "agbEhJKSWM8ma2zUZ4krV0RNj8LB5OtsHFcCCrwRfUE"
+    "value": ""
   },
   "clockFormat": {
     "text": "Use 24-Hour Clock",
