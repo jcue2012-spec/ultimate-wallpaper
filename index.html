@@ -294,7 +294,7 @@ function initWebUI() {
 const ImageProviders = {
     wallhaven: async () => {
         const url = `https://wallhaven.cc/api/v1/search?categories=${currentCategory}&purity=100&atleast=3840x2160&sorting=random&limit=7`;
-        const res = await fetch(url);
+        const res = await fetch(CORS_PROXY + encodeURIComponent(url));
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         return data.data.map(img => img.path);
