@@ -21,10 +21,29 @@
     /* --- UI OVERLAYS & SHADOWS --- */
     #status {
         position: fixed; bottom: 20px; left: 20px; color: white;
-        background: rgba(0,0,0,0.6); padding: 10px 15px; border-radius: 5px;
+        background: rgba(0,0,0,0.8); padding: 12px 18px; border-radius: 8px;
         font-size: 14px; z-index: 100; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-        opacity: 0; transition: opacity 0.3s ease; pointer-events: none;
+        opacity: 0; transition: opacity 0.3s ease;
+        display: flex; align-items: center; gap: 12px; /* Layout for text + button */
+        pointer-events: auto; /* Changed from none to auto */
+        min-width: 200px;
+        max-width: 400px;
+        justify-content: space-between;
+        border: 1px solid rgba(255,255,255,0.1);
     }
+
+    #status span {
+        flex-grow: 1;
+        margin-right: 10px;
+    }
+    
+    #status button {
+        background: #e81123; border: none; color: white; 
+        padding: 4px 10px; border-radius: 4px; cursor: pointer;
+        font-size: 12px; font-weight: bold; text-transform: uppercase;
+    }
+    
+    #status button:hover { background: #b40e1c; }
 
     #weather-overlay {
         position: fixed; top: 20px; right: 20px; color: white;
@@ -350,27 +369,36 @@ async function initWallpapers() {
     
     const cacheKeyData = `cache_${currentSource}_images`;
     const cacheKeyTime = `cache_${currentSource}_time`;
+    const cacheKeyStamp = `cache_${currentSource}_stamp`; // New key for the readable string
 
     const cachedData = localStorage.getItem(cacheKeyData);
     const cachedTime = localStorage.getItem(cacheKeyTime);
+    const cachedStamp = localStorage.getItem(cacheKeyStamp);
 
     if (cachedData && cachedTime && (now - parseInt(cachedTime) < cacheDurationMs)) {
         wallpapers = JSON.parse(cachedData);
+        updateStatus(`Loaded from cache (${cachedStamp})`);
     } else {
         try {
             const providerFunction = ImageProviders[currentSource];
             wallpapers = await providerFunction();
             
             if (wallpapers && wallpapers.length > 0) {
+                const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 localStorage.setItem(cacheKeyData, JSON.stringify(wallpapers));
                 localStorage.setItem(cacheKeyTime, now.toString());
+                localStorage.setItem(cacheKeyStamp, timeStr);
+                
+                updateStatus(`Fresh images loaded at ${timeStr}`);
             } else {
                 throw new Error('API returned 0 images.');
             }
         } catch (error) {
-            console.error('Failed to fetch images:', error);
-            updateStatus(`Fetch Error: ${error.message}`); 
-            if (cachedData) wallpapers = JSON.parse(cachedData);
+            updateStatus(`Fetch Error: ${error.message}`, true); 
+            if (cachedData) {
+                wallpapers = JSON.parse(cachedData);
+                updateStatus(`API Error. Using cache from ${cachedStamp}`, true);
+            }
         }
     }
 
@@ -507,11 +535,27 @@ function updateDateTime() {
     document.getElementById('datetime').textContent = `${dateString}\n${timeString}`;
 }
 
-function updateStatus(message) {
+function updateStatus(message, showRetry = false) {
     const status = document.getElementById('status');
-    status.textContent = message;
+    
+    // Set the message
+    status.innerHTML = `<span>${message}</span>`;
+    
+    // If retry is requested, append the button
+    if (showRetry) {
+        const btn = document.createElement('button');
+        btn.textContent = 'Retry';
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            initWallpapers();
+        };
+        status.appendChild(btn);
+    }
+
     status.style.opacity = '1';
-    if (!message.includes('Error')) {
+
+    // Only auto-hide if there is NO error/retry button
+    if (!showRetry && !message.includes('Error')) {
         setTimeout(() => { status.style.opacity = '0'; }, 3000); 
     }
 }
