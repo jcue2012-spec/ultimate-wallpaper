@@ -291,54 +291,53 @@ function initWebUI() {
 // ==========================================
 // 4. IMAGE PROVIDERS (ROUTER)
 // ==========================================
+// Utility for consistent error handling
+async function safeFetch(url, useProxy = false) {
+    const target = useProxy ? CORS_PROXY + encodeURIComponent(url) : url;
+    try {
+        const res = await fetch(target);
+        if (!res.ok) throw new Error(`Source returned ${res.status}`);
+        return await res.json();
+    } catch (e) {
+        throw new Error(`Connection failed: ${e.message}`);
+    }
+}
+
 const ImageProviders = {
     wallhaven: async () => {
         const url = `https://wallhaven.cc/api/v1/search?categories=${currentCategory}&purity=100&atleast=3840x2160&sorting=random&limit=7`;
-        const res = await fetch(CORS_PROXY + encodeURIComponent(url));
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
+        const data = await safeFetch(url, true);
         return data.data.map(img => img.path);
     },
     bing: async () => {
-        const bingUrl = 'https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=7';
-        const res = await fetch(CORS_PROXY + encodeURIComponent(bingUrl));
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
+        const url = 'https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=7';
+        const data = await safeFetch(url, true);
         return data.images.map(img => "https://www.bing.com" + img.url);
     },
     spotlight: async () => {
-        const spotlightUrl = 'https://arc.msn.com/v3/Delivery/Placement?pid=209567&fmt=json';
-        const res = await fetch(CORS_PROXY + encodeURIComponent(spotlightUrl));
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        
+        const url = 'https://arc.msn.com/v3/Delivery/Placement?pid=209567&fmt=json';
+        const data = await safeFetch(url, true);
         const urls = [];
-        if (data.batchrsp && data.batchrsp.items) {
-            for (let item of data.batchrsp.items) {
-                try {
-                    const innerJson = JSON.parse(item.item);
-                    if (innerJson.ad && innerJson.ad.image_fullscreen_001_landscape) {
-                        urls.push(innerJson.ad.image_fullscreen_001_landscape.u);
-                    }
-                } catch(e) {}
-            }
-        }
+        data.batchrsp?.items?.forEach(item => {
+            try {
+                const inner = JSON.parse(item.item);
+                const link = inner.ad?.image_fullscreen_001_landscape?.u;
+                if (link) urls.push(link);
+            } catch(e) {}
+        });
         return urls;
     },
     nasa: async () => {
+        // NASA supports CORS, no proxy needed
         const url = `https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&count=7`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        return data.filter(item => item.media_type === 'image').map(item => item.hdurl || item.url);
+        const data = await safeFetch(url, false);
+        return data.filter(i => i.media_type === 'image').map(i => i.hdurl || i.url);
     },
     unsplash: async () => {
-        if (!unsplashKey) throw new Error("Unsplash Access Key is missing in Settings.");
+        if (!unsplashKey) throw new Error("Please enter an Unsplash API Key in settings.");
         const url = `https://api.unsplash.com/photos/random?orientation=landscape&count=7&client_id=${unsplashKey}`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        return data.map(item => `${item.urls.raw}&w=3840&h=2160&fit=crop`);
+        const data = await safeFetch(url, false);
+        return data.map(item => `${item.urls.raw}&w=${window.screen.width}&h=${window.screen.height}&fit=crop`);
     }
 };
 
@@ -377,12 +376,17 @@ async function initWallpapers() {
 
     if (wallpapers && wallpapers.length > 0) {
         currentImageIndex = 0;
-        document.getElementById("wall1").src = wallpapers[0];
-        document.getElementById("wall1").style.opacity = 1;
-        updateStatus(`Loaded ${wallpapers.length} ${currentSource} images`);
+        const firstWall = document.getElementById("wall1");
         
-        resetWallpaperTimer();
-        setTimeout(showNextWallpaper, 8000);
+        // Ensure the very first image is also pre-loaded before showing
+        const firstLoad = new Image();
+        firstLoad.onload = () => {
+            firstWall.src = wallpapers[0];
+            firstWall.style.opacity = 1;
+            updateStatus(`Active: ${currentSource}`);
+            resetWallpaperTimer(); // Starts the cycle at the user's defined interval
+        };
+        firstLoad.src = wallpapers[0];
     } else {
         if (document.getElementById('status').textContent.includes('Loading')) {
             updateStatus('Failed to load images');
@@ -395,16 +399,33 @@ function showNextWallpaper() {
     
     currentImageIndex = (currentImageIndex + 1) % wallpapers.length;
     const nextUrl = wallpapers[currentImageIndex];
+    const wall1 = document.getElementById("wall1");
+    const wall2 = document.getElementById("wall2");
 
-    const img1 = document.getElementById("wall1");
-    const img2 = document.getElementById("wall2");
+    // Create a virtual image to pre-load the data
+    const imgPreloader = new Image();
+    updateStatus("Buffering next wallpaper...");
 
-    if (showingFirstLayer) {
-        img2.src = nextUrl; img2.style.opacity = 1; img1.style.opacity = 0;
-    } else {
-        img1.src = nextUrl; img1.style.opacity = 1; img2.style.opacity = 0;
-    }
-    showingFirstLayer = !showingFirstLayer;
+    imgPreloader.onload = () => {
+        if (showingFirstLayer) {
+            wall2.src = nextUrl;
+            wall2.style.opacity = 1;
+            wall1.style.opacity = 0;
+        } else {
+            wall1.src = nextUrl;
+            wall1.style.opacity = 1;
+            wall2.style.opacity = 0;
+        }
+        showingFirstLayer = !showingFirstLayer;
+        updateStatus("Wallpaper updated");
+    };
+
+    imgPreloader.onerror = () => {
+        updateStatus("Error loading image, skipping...");
+        showNextWallpaper(); // Try the next one in the array
+    };
+
+    imgPreloader.src = nextUrl;
 }
 
 function resetWallpaperTimer() {
