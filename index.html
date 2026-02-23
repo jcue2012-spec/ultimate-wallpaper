@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Ultimate Dynamic Wallpaper</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
     /* --- BASE STYLES --- */
     html, body {
@@ -12,30 +11,23 @@
         height: 100%; width: 100%; font-family: 'Segoe UI', system-ui, sans-serif; color: #ffffff;
         cursor: pointer;
     }
-
     #wall1, #wall2 {
         position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
         object-fit: cover; opacity: 0; transition: opacity 2s ease-in-out; will-change: opacity;
         pointer-events: none;
     }
-
-    /* --- PROGRESS BAR --- */
+    /* --- PROGRESS & OVERLAYS --- */
     #progress-container {
         position: fixed; top: 0; left: 0; width: 100%; height: 3px;
         background: rgba(255,255,255,0.1); z-index: 1000; opacity: 0; transition: opacity 0.3s;
     }
-    #progress-bar {
-        height: 100%; width: 0%; background: #0078D4;
-        box-shadow: 0 0 10px rgba(0, 120, 212, 0.8); transition: width 0.4s ease;
-    }
-
+    #progress-bar { height: 100%; width: 0%; background: #0078D4; transition: width 0.4s ease; }
     #status {
         position: fixed; bottom: 20px; left: 20px; color: white;
         background: rgba(0,0,0,0.8); padding: 12px 18px; border-radius: 8px;
         font-size: 13px; z-index: 100; opacity: 0; transition: opacity 0.3s ease;
         border: 1px solid rgba(255,255,255,0.1); pointer-events: none;
     }
-
     #weather-overlay {
         position: fixed; top: 20px; right: 20px; color: white;
         background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); padding: 20px;
@@ -43,7 +35,6 @@
     }
     #datetime { font-size: 28px; font-weight: 300; margin-bottom: 5px; white-space: pre-line; }
     #temperature { font-size: 24px; font-weight: bold; opacity: 0.9; }
-
     /* --- SETTINGS PANEL --- */
     #web-settings {
         position: fixed; top: 0; left: 0; height: 100vh; width: 320px;
@@ -54,31 +45,22 @@
     }
     #web-settings:hover { transform: translateX(0); }
     #web-settings::after { content: "⚙️"; position: absolute; right: 8px; top: 50%; opacity: 0.4; font-size: 18px; }
-
     .setting-group { margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px; }
     .setting-group label { font-size: 11px; color: #888; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
     .setting-group select, .setting-group input {
         width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
         color: white; border-radius: 5px; outline: none; box-sizing: border-box; font-family: inherit;
     }
-    
-    .btn-primary { background: #0078D4; color: white; border: none; padding: 12px; font-weight: bold; width: 100%; cursor: pointer; border-radius: 5px; margin-top: 10px; transition: background 0.2s; }
-    .btn-primary:hover { background: #005A9E; }
-
-    .control-row { display: flex; gap: 8px; margin-top: 10px; }
+    .btn-primary { background: #0078D4; color: white; border: none; padding: 12px; font-weight: bold; width: 100%; cursor: pointer; border-radius: 5px; margin-top: 10px; }
     .btn-control { flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-
     .info-box { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 6px; border-left: 3px solid #0078D4; margin-top: 20px; }
     .info-box p { margin: 5px 0; font-size: 13px; color: #bbb; }
 </style>
 </head>
-
 <body onclick="showNextWallpaper()">
 
 <div id="progress-container"><div id="progress-bar"></div></div>
-
-<img id="wall1">
-<img id="wall2">
+<img id="wall1"><img id="wall2">
 <div id="status"></div>
 
 <div id="weather-overlay">
@@ -88,7 +70,6 @@
 
 <div id="web-settings" onclick="event.stopPropagation()">
     <h2 style="font-weight: 300; margin-top: 0;">Settings</h2>
-    
     <div class="setting-group">
         <label>Image Source</label>
         <select id="ui-source">
@@ -96,11 +77,11 @@
             <option value="bing">Bing Images</option>
             <option value="spotlight">Windows Spotlight</option>
             <option value="nasa">NASA APOD</option>
+            <option value="unsplash">Unsplash</option>
         </select>
     </div>
-
-    <div class="setting-group">
-        <label>Category (Wallhaven)</label>
+    <div id="wallhaven-options" class="setting-group">
+        <label>Wallhaven Category</label>
         <select id="ui-category">
             <option value="100">General</option>
             <option value="010">Anime</option>
@@ -108,28 +89,15 @@
             <option value="111">Everything</option>
         </select>
     </div>
-
     <div class="setting-group">
-        <label>Auto-Fetch New Images Every</label>
-        <select id="ui-cache-hours">
-            <option value="1">1 Hour</option>
-            <option value="6">6 Hours</option>
-            <option value="12" selected>12 Hours</option>
-            <option value="24">24 Hours</option>
-        </select>
-    </div>
-
-    <div class="setting-group">
-        <label>Cycle Image (Minutes)</label>
+        <label>Cycle Interval (Minutes)</label>
         <input type="number" id="ui-interval" min="1" max="60" value="3">
     </div>
-
-    <button id="ui-refresh" class="btn-primary">Force Refresh Now</button>
-
+    <button id="ui-refresh" class="btn-primary">Force Refresh Cache</button>
     <div class="info-box">
         <p>Last Sync: <b id="ui-last-sync">Never</b></p>
         <p>Batch Size: <b id="ui-img-count">0</b></p>
-        <div class="control-row">
+        <div style="display:flex; gap:8px; margin-top:10px;">
             <button class="btn-control" onclick="showPrevWallpaper()">◀ Prev</button>
             <button class="btn-control" onclick="showNextWallpaper()">Next ▶</button>
         </div>
@@ -138,222 +106,141 @@
 
 <script>
 // ==========================================
-// 1. STATE
+// 1. STATE & UTILS
 // ==========================================
 let config = JSON.parse(localStorage.getItem('web_wallpaper_config')) || {
-    source: "wallhaven", category: "100", interval: 3, cacheHours: 12
+    source: "wallhaven", category: "100", interval: 3, cacheHours: 12, unsplashKey: ""
 };
 
-let currentSource = config.source; 
-let currentCategory = config.category;
-let cycleIntervalMinutes = config.interval;
-let cacheDurationMs = config.cacheHours * 60 * 60 * 1000;
-
-let isLivelyMode = false;
-let wallpaperCycleTimer = null;
-let wallpapers = [];
-let currentImageIndex = 0;
-let showingFirstLayer = true;
+let currentSource = config.source, currentCategory = config.category;
+let cycleIntervalMinutes = config.interval, cacheDurationMs = config.cacheHours * 3600000;
+let unsplashKey = config.unsplashKey, isLivelyMode = false;
+let wallpaperCycleTimer = null, wallpapers = [], currentImageIndex = 0, showingFirstLayer = true;
 
 const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
 
-// ==========================================
-// 2. UI UTILS
-// ==========================================
-function updateStatus(message, isError = false) {
-    const status = document.getElementById('status');
-    status.textContent = message;
-    status.style.opacity = '1';
-    if (!isError) setTimeout(() => { status.style.opacity = '0'; }, 3000); 
+function updateStatus(msg, isErr = false) {
+    const s = document.getElementById('status'); s.textContent = msg; s.style.opacity = '1';
+    if (!isErr) setTimeout(() => s.style.opacity = '0', 3000);
 }
-
-function updateProgressBar(percent) {
-    const container = document.getElementById('progress-container');
-    const bar = document.getElementById('progress-bar');
-    
-    container.style.opacity = (percent > 0 && percent < 100) ? '1' : '0';
-    bar.style.width = percent + '%';
-    
-    if (percent >= 100) {
-        setTimeout(() => { bar.style.width = '0%'; }, 400);
-    }
+function updateProgress(pct) {
+    const c = document.getElementById('progress-container'), b = document.getElementById('progress-bar');
+    c.style.opacity = (pct > 0 && pct < 100) ? '1' : '0'; b.style.width = pct + '%';
 }
 
 // ==========================================
-// 3. FETCH ENGINE
+// 2. FETCH ENGINE
 // ==========================================
 async function safeFetch(url, useProxy = false) {
     const target = useProxy ? CORS_PROXY + encodeURIComponent(url) : url;
+    updateProgress(30);
     try {
-        updateProgressBar(30); // Start of API call
-        const res = await fetch(target);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        updateProgressBar(60); // API responded
-        return await res.json();
+        const r = await fetch(target); if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        updateProgress(60); return await r.json();
     } catch (e) { throw new Error(e.message); }
 }
 
 const Providers = {
     wallhaven: async () => {
-        const data = await safeFetch(`https://wallhaven.cc/api/v1/search?categories=${currentCategory}&purity=100&atleast=3840x2160&sorting=random&limit=10`, true);
-        return data.data.map(img => img.path);
+        const d = await safeFetch(`https://wallhaven.cc/api/v1/search?categories=${currentCategory}&purity=100&atleast=3840x2160&sorting=random&limit=10`, true);
+        return d.data.map(img => img.path);
     },
     bing: async () => {
-        const data = await safeFetch('https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=8', true);
-        return data.images.map(img => "https://www.bing.com" + img.url);
+        const d = await safeFetch('https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=8', true);
+        return d.images.map(i => "https://www.bing.com" + i.url);
     },
     nasa: async () => {
-        const data = await safeFetch(`https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&count=5`, false);
-        return data.filter(i => i.media_type === 'image').map(i => i.hdurl || i.url);
+        const d = await safeFetch(`https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&count=5`, false);
+        return d.filter(i => i.media_type === 'image').map(i => i.hdurl || i.url);
     },
     spotlight: async () => {
-        const data = await safeFetch('https://arc.msn.com/v3/Delivery/Placement?pid=209567&fmt=json', true);
-        const urls = [];
-        data.batchrsp?.items?.forEach(item => {
-            try {
-                const inner = JSON.parse(item.item);
-                const link = inner.ad?.image_fullscreen_001_landscape?.u;
-                if (link) urls.push(link);
-            } catch(e) {}
-        });
+        const d = await safeFetch('https://arc.msn.com/v3/Delivery/Placement?pid=209567&fmt=json', true);
+        const urls = []; d.batchrsp?.items?.forEach(i => { try { const inner = JSON.parse(i.item); const link = inner.ad?.image_fullscreen_001_landscape?.u; if (link) urls.push(link); } catch(e){} });
         return urls;
+    },
+    unsplash: async () => {
+        if (!unsplashKey) return ["https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=3840&q=80"];
+        const d = await safeFetch(`https://api.unsplash.com/photos/random?orientation=landscape&count=5&client_id=${unsplashKey}`, false);
+        return d.map(i => i.urls.full);
     }
 };
 
 // ==========================================
-// 4. CORE LOGIC
+// 3. CORE LOGIC
 // ==========================================
 async function initWallpapers() {
     updateStatus(`Syncing ${currentSource}...`);
-    const now = Date.now();
-    const cacheKey = `cache_${currentSource}_images`;
-    const stampKey = `cache_${currentSource}_stamp`;
-    const timeKey = `cache_${currentSource}_time`;
+    const now = Date.now(), cKey = `cache_${currentSource}_images`, tKey = `cache_${currentSource}_time`, sKey = `cache_${currentSource}_stamp`;
+    const cached = localStorage.getItem(cKey), cTime = localStorage.getItem(tKey);
+    const isStale = !cTime || (now - parseInt(cTime) > cacheDurationMs);
 
-    const cached = localStorage.getItem(cacheKey);
-    const cachedTime = localStorage.getItem(timeKey);
-    const isStale = !cachedTime || (now - parseInt(cachedTime) > cacheDurationMs);
+    document.getElementById('wallhaven-options').style.display = (currentSource === 'wallhaven') ? 'flex' : 'none';
 
     try {
         if (isStale) {
             wallpapers = await Providers[currentSource]();
             const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            localStorage.setItem(cacheKey, JSON.stringify(wallpapers));
-            localStorage.setItem(timeKey, now.toString());
-            localStorage.setItem(stampKey, timeStr);
-        } else {
-            wallpapers = JSON.parse(cached);
-        }
-        
-        updateUIInfo(localStorage.getItem(stampKey), wallpapers.length);
+            localStorage.setItem(cKey, JSON.stringify(wallpapers));
+            localStorage.setItem(tKey, now.toString());
+            localStorage.setItem(sKey, timeStr);
+        } else { wallpapers = JSON.parse(cached); }
+        updateUIInfo(localStorage.getItem(sKey), wallpapers.length);
         transitionWallpaper(wallpapers[0]);
     } catch (e) {
-        updateStatus(`Sync Error: ${e.message}`, true);
-        updateProgressBar(0);
-        if (cached) {
-            wallpapers = JSON.parse(cached);
-            updateUIInfo(localStorage.getItem(stampKey), wallpapers.length);
-            transitionWallpaper(wallpapers[0]);
-        }
+        updateStatus(`Sync Error: ${e.message}`, true); updateProgress(0);
+        if (cached) { wallpapers = JSON.parse(cached); transitionWallpaper(wallpapers[0]); }
     }
 }
 
 function transitionWallpaper(url) {
-    updateProgressBar(75); // Buffering Image
-    const pre = new Image();
-    pre.onload = () => {
-        updateProgressBar(100); // Complete
-        const w1 = document.getElementById("wall1"), w2 = document.getElementById("wall2");
+    updateProgress(75); const p = new Image();
+    p.onload = () => {
+        updateProgress(100); const w1 = document.getElementById("wall1"), w2 = document.getElementById("wall2");
         if (showingFirstLayer) { w2.src = url; w2.style.opacity = 1; w1.style.opacity = 0; }
         else { w1.src = url; w1.style.opacity = 1; w2.style.opacity = 0; }
-        showingFirstLayer = !showingFirstLayer;
-        resetWallpaperTimer(); 
+        showingFirstLayer = !showingFirstLayer; resetWallpaperTimer();
     };
-    pre.onerror = () => {
-        updateStatus("Image failed to load", true);
-        updateProgressBar(0);
-    };
-    pre.src = url;
+    p.onerror = () => { updateStatus("Image Load Failed", true); updateProgress(0); };
+    p.src = url;
 }
 
-function showNextWallpaper() { 
-    if (!wallpapers.length) return;
-    currentImageIndex = (currentImageIndex + 1) % wallpapers.length;
-    transitionWallpaper(wallpapers[currentImageIndex]);
-}
-
-function showPrevWallpaper() { 
-    if (!wallpapers.length) return;
-    currentImageIndex = (currentImageIndex - 1 + wallpapers.length) % wallpapers.length;
-    transitionWallpaper(wallpapers[currentImageIndex]);
-}
-
-function resetWallpaperTimer() {
-    if (wallpaperCycleTimer) clearInterval(wallpaperCycleTimer);
-    wallpaperCycleTimer = setInterval(showNextWallpaper, cycleIntervalMinutes * 60 * 1000);
-}
+function showNextWallpaper() { if (wallpapers.length) { currentImageIndex = (currentImageIndex + 1) % wallpapers.length; transitionWallpaper(wallpapers[currentImageIndex]); } }
+function showPrevWallpaper() { if (wallpapers.length) { currentImageIndex = (currentImageIndex - 1 + wallpapers.length) % wallpapers.length; transitionWallpaper(wallpapers[currentImageIndex]); } }
+function resetWallpaperTimer() { if (wallpaperCycleTimer) clearInterval(wallpaperCycleTimer); wallpaperCycleTimer = setInterval(showNextWallpaper, cycleIntervalMinutes * 60000); }
 
 // ==========================================
-// 5. OVERLAYS & BOOT
+// 4. LIVELY & BOOT
 // ==========================================
-function updateUIInfo(stamp, count) {
-    document.getElementById('ui-last-sync').textContent = stamp || "Never";
-    document.getElementById('ui-img-count').textContent = count || "0";
-}
-
+function updateUIInfo(stamp, count) { document.getElementById('ui-last-sync').textContent = stamp || "Never"; document.getElementById('ui-img-count').textContent = count || "0"; }
 function updateDateTime() {
-    const now = new Date();
-    document.getElementById('datetime').textContent = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + "\n" + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    const n = new Date(); document.getElementById('datetime').textContent = n.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + "\n" + n.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 }
-
 async function getWeather() {
     try {
-        const geo = await (await fetch('https://ipapi.co/json/')).json();
-        const w = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${geo.latitude}&longitude=${geo.longitude}&current=temperature_2m&temperature_unit=celsius`)).json();
+        const g = await (await fetch('https://ipapi.co/json/')).json();
+        const w = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${g.latitude}&longitude=${g.longitude}&current=temperature_2m&temperature_unit=celsius`)).json();
         document.getElementById('temperature').textContent = `${Math.round(w.current.temperature_2m)}°C`;
     } catch (e) {}
 }
 
 function livelyPropertyListener(name, val) {
-    if (!isLivelyMode) { isLivelyMode = true; document.getElementById('web-settings').style.opacity = '0.2'; }
-    if (name === "imageSource") { 
-        const src = ["wallhaven", "bing", "spotlight", "nasa"]; 
-        currentSource = src[val]; 
-        localStorage.removeItem(`cache_${currentSource}_time`);
-        initWallpapers(); 
+    if (!isLivelyMode) { isLivelyMode = true; document.getElementById('web-settings').style.opacity = '0.1'; document.getElementById('web-settings').style.pointerEvents = 'none'; }
+    let r = false;
+    switch(name) {
+        case "imageSource": const s = ["wallhaven", "bing", "spotlight", "nasa", "unsplash"]; currentSource = s[val]; r = true; break;
+        case "wallhavenCategory": const c = ["100", "010", "001", "111"]; currentCategory = c[val]; if (currentSource === "wallhaven") r = true; break;
+        case "bgInterval": cycleIntervalMinutes = val; resetWallpaperTimer(); break;
+        case "cacheHours": cacheDurationMs = val * 3600000; break;
+        case "unsplashKey": unsplashKey = val; if (currentSource === "unsplash") r = true; break;
+        case "forceRefresh": r = true; break;
     }
-    else if (name === "bgInterval") { cycleIntervalMinutes = val; resetWallpaperTimer(); }
+    if (r) { localStorage.removeItem(`cache_${currentSource}_time`); initWallpapers(); }
 }
 
-// Initialization
-document.getElementById('ui-source').value = currentSource;
-document.getElementById('ui-cache-hours').value = config.cacheHours;
-document.getElementById('ui-interval').value = cycleIntervalMinutes;
-
-initWallpapers();
-updateDateTime();
-setInterval(updateDateTime, 1000);
-getWeather();
-setInterval(getWeather, 1800000);
-
-document.getElementById('ui-refresh').onclick = () => {
-    localStorage.removeItem(`cache_${currentSource}_time`);
-    initWallpapers();
-};
-
-document.getElementById('ui-cache-hours').onchange = (e) => {
-    const hrs = Number(e.target.value);
-    cacheDurationMs = hrs * 60 * 60 * 1000;
-    localStorage.setItem('web_wallpaper_config', JSON.stringify({...config, cacheHours: hrs}));
-    updateStatus(`Auto-refresh set to ${hrs}h`);
-};
-
-document.getElementById('ui-source').onchange = (e) => {
-    currentSource = e.target.value;
-    localStorage.setItem('web_wallpaper_config', JSON.stringify({...config, source: currentSource}));
-    initWallpapers();
-};
+initWallpapers(); updateDateTime(); setInterval(updateDateTime, 1000); getWeather(); setInterval(getWeather, 1800000);
+document.getElementById('ui-refresh').onclick = () => { localStorage.removeItem(`cache_${currentSource}_time`); initWallpapers(); };
+document.getElementById('ui-source').onchange = (e) => { currentSource = e.target.value; localStorage.removeItem(`cache_${currentSource}_time`); initWallpapers(); };
+document.getElementById('ui-category').onchange = (e) => { currentCategory = e.target.value; localStorage.removeItem(`cache_${currentSource}_time`); initWallpapers(); };
 </script>
-
 </body>
 </html>
