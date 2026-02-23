@@ -1,0 +1,59 @@
+{
+  "imageSource": {
+    "text": "Image Provider",
+    "type": "dropdown",
+    "value": 0,
+    "items": [
+      "Wallhaven",
+      "Bing Images",
+      "Windows Spotlight",
+      "NASA APOD",
+      "Unsplash"
+    ]
+  },
+  "cacheHours": {
+    "text": "API Cache Duration (Hours)",
+    "type": "slider",
+    "value": 12,
+    "min": 1,
+    "max": 24,
+    "step": 1
+  },
+  "bgInterval": {
+    "text": "Wallpaper Cycle (Minutes)",
+    "type": "slider",
+    "value": 3,
+    "min": 1,
+    "max": 60,
+    "step": 1
+  },
+  "wallhavenCategory": {
+    "text": "Wallhaven Category",
+    "type": "dropdown",
+    "value": 0,
+    "items": [
+      "General Only",
+      "Anime Only",
+      "People Only",
+      "General + Anime",
+      "General + People",
+      "Anime + People",
+      "Everything"
+    ]
+  },
+  "unsplashKey": {
+    "text": "Unsplash Access Key",
+    "type": "textbox",
+    "value": "agbEhJKSWM8ma2zUZ4krV0RNj8LB5OtsHFcCCrwRfUE"
+  },
+  "clockFormat": {
+    "text": "Use 24-Hour Clock",
+    "type": "checkbox",
+    "value": false
+  },
+  "forceRefresh": {
+    "text": "Force Refresh Images",
+    "type": "button",
+    "value": "Fetch Now"
+  }
+}
