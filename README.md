@@ -1,89 +1,81 @@
 # 🌌 Ultimate Dynamic Wallpaper
 
-A high-performance, minimalist dynamic wallpaper engine designed for **Lively Wallpaper** and standalone web browsers. It features high-resolution imagery from multiple providers, real-time weather, and a flicker-free transition system.
+A high-performance, minimalist dynamic wallpaper engine designed for **Lively Wallpaper** and standalone web browsers. It features high-resolution imagery from multiple providers, a dual-unit real-time weather system, and a flicker-free transition engine.
+
+
 
 ## 🚀 Key Features
 
-* **Multi-Source Imagery**: Support for Wallhaven (4K), Bing Daily, Windows Spotlight, NASA APOD, and Unsplash.
-* **Flicker-Free Engine**: Uses a dual-layer crossfade system with a virtual preloader to ensure images are fully buffered before appearing.
-* **Fetch Progress Bar**: A sleek, top-mounted progress bar providing real-time feedback during API syncs and image buffering.
-* **Contextual UI**: Settings sidebar automatically adapts; Wallhaven-specific categories hide themselves when using other providers.
-* **Dual Mode**: 
-    * **Desktop Mode**: Integrates natively with Lively Wallpaper's property menu.
-    * **Web Mode**: Hover settings drawer for manual configuration in browsers.
-* **Smart Caching**: Configurable API cache (1–24 hours) to reduce network overhead and prevent API rate-limiting.
-* **Bidirectional Controls**: Manually skip forward or go back through the current batch using UI buttons or background clicks.
+* **Multi-Source Imagery**: Native support for Wallhaven (4K), Bing Daily, Windows Spotlight, NASA APOD, and Unsplash.
+* **Dual-Unit Weather Engine**: Simultaneous Celsius and Fahrenheit display with automated IP-based geolocation.
+* **WMO Icon Mapping**: Weather codes are translated into descriptive icons (☀️, ⛈️, 🌫️, etc.) for real-time environmental monitoring.
+* **Flicker-Free Engine**: Uses a dual-layer crossfade system (`#wall1` & `#wall2`) with a virtual preloader to ensure images are fully buffered before appearing.
+* **Proactive Feedback**: Top-mounted progress bar and bottom-left status alerts provide transparency into API health and fetch latency.
+* **Contextual UI**: Settings sidebar intelligently hides/shows fields (like API keys or categories) based on the active provider.
+* **Smart Caching**: Configurable polling intervals (1–24 hours) to reduce network overhead and prevent API rate-limiting.
 
 ---
 
-## 🛠️ Configuration
+## 🛠️ Configuration & Usage
 
-### 1. Lively Wallpaper (Recommended)
-1.  Add the folder containing `index.html` and `LivelyProperties.json` to Lively Wallpaper.
+### 1. Lively Wallpaper (Desktop)
+1.  Add the folder containing `index.html` and `LivelyProperties.json` to Lively.
 2.  Right-click the wallpaper and select **Customize**.
-3.  Adjust the **Image Provider**, **Refresh Batch**, and **Cycle Interval** sliders.
+3.  The Web Sidebar will be disabled in this mode to prioritize Lively's native controls.
 
-### 2. Standalone Browser
+### 2. Standalone Browser (Web)
 1.  Open `index.html` in any modern browser.
-2.  **Hover** your mouse over the **left edge** of the screen to reveal the settings drawer.
-3.  Click the **background** to manually skip to the next image.
-
----
-
-## 📁 File Structure
-
-* `index.html`: The core engine, styles, and logic.
-* `LivelyProperties.json`: Defines the native UI controls for the Lively Wallpaper application.
-* `README.md`: Documentation and troubleshooting.
+2.  **Hover** over the **left edge** of the screen to reveal the Settings Sidebar.
+3.  **Click the background** to manually skip to the next image in the current batch.
 
 ---
 
 ## 📡 API Providers & Logic
 
-| Provider | Resolution | Notes |
+| Provider | Data Type | Notes |
 | :--- | :--- | :--- |
-| **Wallhaven** | 4K / 8K | Supports General, Anime, and People categories. |
-| **Bing** | 1080p/4K | Official "Image of the Day" with localized metadata. |
-| **NASA** | HD+ | Astronomy Picture of the Day. Supports "HD" URLs where available. |
-| **Spotlight** | 4K | Original high-quality images used by Windows Lockscreen. |
-| **Unsplash** | Variable | Requires a personal API key for high-volume use. |
-
-
+| **Wallhaven** | Backgrounds | Supports General, Anime, and People categories. |
+| **Bing/NASA** | Backgrounds | Fetches the daily "Image of the Day" with localized metadata. |
+| **Open-Meteo** | Weather | Fetches `weather_code` and converts `temp_c` to `temp_f`. |
+| **IP-API** | Location | Provides city/region data for localized weather accuracy. |
 
 ---
 
-## 🔧 Technical Details
+## 🔧 Technical Architecture
 
-* **Transitions**: Managed via a `transitionWallpaper()` function that handles cross-fading between two absolute-positioned `<img>` tags.
-* **Caching**: State is preserved in `localStorage`. The batch of images is stored as a JSON array, while sync timestamps are stored to manage auto-refreshes.
-* **Navigation**: Uses modular arithmetic `(index - 1 + length) % length` to allow infinite looping in both forward and backward directions.
-* **Safety**: All cross-origin requests are routed through a CORS proxy where necessary (Bing/Spotlight) to prevent browser security blocks.
+### Proactive Management Logic
+Following proactive SLA strategies, the engine treats API fetches as monitored services:
+* **SafeFetch Wrapper**: Prevents script crashes during provider downtime using try-catch blocks.
+* **Progressive Loading**: Visualizes "Latency" ($30\% \rightarrow 60\% \rightarrow 100\%$) during the fetch-to-buffer pipeline.
+* **Cache Validation**: Uses a "Stale-While-Revalidate" pattern checking timestamps ($CurrentTime - CachedTime > Expiry$) before hitting external APIs.
+
+
+
+### Weather Code Mapping
+The engine maps **WMO (World Meteorological Organization)** codes to visual assets:
+* **Clear/Mainly Clear (0-1)**: ☀️ / 🌤️
+* **Cloudy (2-3)**: ⛅ / ☁️
+* **Atmospheric (45-48)**: 🌫️ (Fog/Misty)
+* **Precipitation (61-95)**: 🌧️ (Rain) / ⛈️ (Storm)
 
 ---
 
 ## 🛠️ Troubleshooting
 
-If the wallpaper is not displaying images or the weather is stuck at `--°C`, check the following:
+### Images are not loading (Black Screen)
+* **CORS Restrictions**: Some providers require a proxy. The engine uses `allorigins.win`. If the proxy is down, Bing and Spotlight will fail. Switch to **NASA** or **Unsplash** to verify.
+* **API Limits**: NASA and Wallhaven have hourly limits. If "Batch Size" stays at 0, wait 15 minutes or click **"Force Refresh Cache"**.
 
-### 1. Images Not Loading (Black Screen)
-* **CORS Proxy Issues**: This engine uses `allorigins.win` to bypass security restrictions for Bing and Spotlight. If their server is down, these sources will fail. 
-    * *Fix*: Switch to **NASA APOD** or **Unsplash** (which don't require the proxy).
-* **API Rate Limits**: Providers like NASA and Wallhaven have hourly limits. 
-    * *Fix*: Click **"Force Refresh Now"** in the settings. If it still fails, wait 15 minutes or switch providers.
-* **Broken Cache**: Sometimes the stored batch of URLs contains a "dead" link.
-    * *Fix*: Use the **"Force Refresh Now"** button in the sidebar to wipe the local cache and fetch a new batch.
+### Weather is stuck at "--°C"
+* **Location Blocking**: Ad-blockers or VPNs may block `ipapi.co`. Click the **"Refresh Weather & Location"** button in the sidebar to re-trigger detection.
 
-### 2. Weather Not Updating
-* **Location Permissions**: The engine uses `ipapi.co` to guess location via IP. VPNs or ad-blockers can sometimes block this.
-* **HTTPS requirement**: Browsers may block Geolocation/Weather APIs if served over unencrypted connections.
-
-### 3. Settings Not Saving
-* **Local Storage**: Preferences are saved in `localStorage`. Incognito modes or "Clear history on exit" settings will reset your wallpaper.
-* **Lively vs. Web Conflict**: If Lively Mode is active, the Web Sidebar is dimmed and unclickable to prevent conflicts. Use the Lively "Customize" menu.
+### Settings are not visible
+* **Theme Conflict**: v2.1.0 includes a high-contrast CSS fix for dropdowns. Ensure you are using the latest `index.html` to avoid "white-on-white" text issues.
 
 ---
 
-## 📝 Commit History Summary
-* **Refactor**: Shifted to modular fetch engine with `safeFetch` error handling.
-* **UX**: Added top-mounted progress bar for download feedback.
-* **Controls**: Added bidirectional navigation (Prev/Next) and contextual settings visibility.
+## 📝 Change Log (v1.0.2)
+* Added Dual-Temperature ($C/F$) logic.
+* Implemented WMO-based icon and description mapping.
+* Refactored Settings Sidebar for contextual visibility.
+* Restored top-mounted Progress Bar for fetch observability.
