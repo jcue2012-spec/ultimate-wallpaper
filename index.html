@@ -3,10 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <title>Ultimate Dynamic Wallpaper</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
     /* --- BASE STYLES --- */
     html, body { margin: 0; padding: 0; background: #000; overflow: hidden; height: 100%; width: 100%; font-family: 'Segoe UI', system-ui, sans-serif; color: #fff; cursor: pointer; }
     #wall1, #wall2 { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: cover; opacity: 0; transition: opacity 2s ease-in-out; will-change: opacity; pointer-events: none; }
+
+    /* --- GLASSMORPHISM GEAR TOGGLE --- */
+    #sidebar-toggle {
+        position: fixed; top: 20px; left: 20px; z-index: 300;
+        width: 45px; height: 45px; border-radius: 12px;
+        background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2); color: white;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: all 0.5s ease;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+    }
+    #sidebar-toggle:hover { background: rgba(255, 255, 255, 0.2); transform: rotate(45deg); }
+
+    /* --- AUTO-HIDE / SLEEP MODE --- */
+    .ui-fade { transition: opacity 1s ease-in-out; opacity: 1; }
+    .hidden-ui { opacity: 0 !important; pointer-events: none; }
 
     /* --- PROGRESS & STATUS --- */
     #progress-container { position: fixed; top: 0; left: 0; width: 100%; height: 3px; background: rgba(255,255,255,0.1); z-index: 1000; opacity: 0; transition: opacity 0.3s; }
@@ -16,38 +33,58 @@
     /* --- WEATHER OVERLAY --- */
     #weather-overlay {
         position: fixed; top: 20px; right: 20px; color: white;
-        background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
-        padding: 20px; border-radius: 10px; z-index: 100;
-        font-size: 16px; min-width: 280px; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
-        pointer-events: none; text-align: left;
+        background: rgba(0,0,0,0.3); backdrop-filter: blur(10px);
+        padding: 20px; border-radius: 15px; z-index: 100;
+        min-width: 280px; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+        pointer-events: none; text-align: left; border: 1px solid rgba(255,255,255,0.1);
     }
-    #datetime { font-size: 28px; font-weight: 300; margin-bottom: 10px; white-space: pre-line; }
+    #datetime { font-size: 24px; font-weight: 300; margin-bottom: 10px; white-space: pre-line; line-height: 1.2; }
     #location { font-size: 14px; margin-bottom: 15px; opacity: 0.9; font-weight: 600; letter-spacing: 0.5px; }
     #weather-info { display: flex; align-items: center; gap: 15px; }
-    #weather-icon { font-size: 48px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.8)); }
-    #weather-details { display: flex; flex-direction: column; gap: 5px; }
-    #temperature { font-size: 28px; font-weight: bold; }
-    #weather-description { font-size: 14px; opacity: 0.9; white-space: pre-line; }
+    #weather-icon { font-size: 48px; }
+    #temperature { font-size: 24px; font-weight: bold; }
+    #weather-description { font-size: 14px; opacity: 0.9; }
 
     /* --- SETTINGS SIDEBAR --- */
-    #web-settings { position: fixed; top: 0; left: 0; height: 100vh; width: 320px; background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(15px); transform: translateX(-310px); transition: transform 0.3s ease; padding: 30px 25px; box-sizing: border-box; z-index: 200; overflow-y: auto; cursor: default; }
-    #web-settings:hover { transform: translateX(0); }
-    .setting-group { margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px; }
-    .setting-group label { font-size: 11px; color: #888; font-weight: 700; text-transform: uppercase; }
-    select, input { width: 100%; padding: 10px; background: #222; border: 1px solid #444; color: #fff !important; border-radius: 5px; outline: none; }
+    #web-settings { 
+        position: fixed; top: 0; left: 0; height: 100vh; width: 320px; 
+        background: rgba(15, 15, 15, 0.85); backdrop-filter: blur(20px); 
+        transform: translateX(-100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+        padding: 80px 25px 30px; box-sizing: border-box; z-index: 200; 
+        overflow-y: auto; cursor: default; border-right: 1px solid rgba(255,255,255,0.1);
+    }
+    #web-settings.open { transform: translateX(0); }
+
+    /* Aligned & Justified Layout */
+    .setting-group { margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .setting-group label { font-size: 11px; color: #aaa; font-weight: 700; text-transform: uppercase; flex: 1; }
+    select, input { width: 60%; padding: 8px; background: rgba(255,255,255,0.05); border: 1px solid #444; color: #fff !important; border-radius: 5px; outline: none; font-size: 13px; }
+    
+    /* Toggle Switch */
+    .switch { position: relative; display: inline-block; width: 34px; height: 18px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 20px; }
+    .slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: #0078D4; }
+    input:checked + .slider:before { transform: translateX(16px); }
+
     .btn-primary { background: #0078D4; color: white; border: none; padding: 12px; font-weight: bold; width: 100%; cursor: pointer; border-radius: 5px; margin-top: 10px; }
-    .btn-secondary { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.1); padding: 8px; font-size: 12px; cursor: pointer; border-radius: 4px; margin-top: 5px; }
+    .btn-secondary { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.1); padding: 8px; font-size: 12px; cursor: pointer; border-radius: 4px; width: 100%; margin-top: 5px; }
     .btn-control { flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
     .info-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 6px; border-left: 3px solid #0078D4; margin-top: 20px; font-size: 13px; }
 </style>
 </head>
 <body onclick="showNextWallpaper()">
 
+<div id="sidebar-toggle" class="ui-fade" onclick="toggleSidebar(event)">
+    <i class="fas fa-cog"></i>
+</div>
+
 <div id="progress-container"><div id="progress-bar"></div></div>
 <img id="wall1"><img id="wall2">
 <div id="status"></div>
 
-<div id="weather-overlay">
+<div id="weather-overlay" class="ui-fade">
     <div id="datetime"></div>
     <div id="location">Detecting Location...</div>
     <div id="weather-info">
@@ -60,8 +97,16 @@
 </div>
 
 <div id="web-settings" onclick="event.stopPropagation()">
-    <h2 style="font-weight: 300; margin-top: 0;">Settings</h2>
+    <h2 style="font-weight: 300; margin-top: 0; margin-bottom: 25px;">Settings</h2>
     
+    <div class="setting-group">
+        <label>Sleep Mode</label>
+        <label class="switch">
+            <input type="checkbox" id="ui-sleep-mode">
+            <span class="slider"></span>
+        </label>
+    </div>
+
     <div class="setting-group">
         <label>Image Provider</label>
         <select id="ui-source">
@@ -90,7 +135,7 @@
 
     <div class="setting-group">
         <label>Cycle Rotation (Minutes)</label>
-        <input type="number" id="ui-interval" min="1" max="60" value="3">
+        <input type="number" id="ui-interval" min="1" max="60">
     </div>
 
     <div id="wallhaven-options" class="setting-group">
@@ -125,11 +170,33 @@
 // 1. STATE & CONFIG
 // ==========================================
 let config = JSON.parse(localStorage.getItem('web_cfg')) || { 
-    source: "wallhaven", cat: "100", interval: 3, cache: 12, key: "" 
+    source: "wallhaven", cat: "100", interval: 3, cache: 12, key: "", sleep: true 
 };
 
 const PROXY = "https://api.allorigins.win/raw?url=";
-let wallpapers = [], currentIndex = 0, showingFirst = true, cycleTimer = null;
+let wallpapers = [], currentIndex = 0, showingFirst = true, cycleTimer = null, idleTimer = null;
+
+function toggleSidebar(e) {
+    e.stopPropagation();
+    document.getElementById('web-settings').classList.toggle('open');
+    resetIdleTimer();
+}
+window.onclick = () => document.getElementById('web-settings').classList.remove('open');
+
+// ==========================================
+// AUTO-HIDE / SLEEP LOGIC
+// ==========================================
+function resetIdleTimer() {
+    const ui = document.querySelectorAll('.ui-fade');
+    ui.forEach(el => el.classList.remove('hidden-ui'));
+    clearTimeout(idleTimer);
+    if (config.sleep && !document.getElementById('web-settings').classList.contains('open')) {
+        idleTimer = setTimeout(() => {
+            ui.forEach(el => el.classList.add('hidden-ui'));
+        }, 3000);
+    }
+}
+['mousemove', 'mousedown', 'keydown'].forEach(evt => window.addEventListener(evt, resetIdleTimer));
 
 function updateStatus(msg, isErr = false) {
     const s = document.getElementById('status'); s.textContent = msg; s.style.opacity = '1';
@@ -157,9 +224,7 @@ async function updateWeather() {
         document.getElementById('temperature').textContent = `${tempC}°C / ${tempF}°F`;
         document.getElementById('weather-description').textContent = desc;
         document.getElementById('weather-icon').textContent = icon;
-    } catch (e) {
-        updateStatus("Weather Sync Failed", true);
-    }
+    } catch (e) { updateStatus("Weather Sync Failed", true); }
 }
 
 // ==========================================
@@ -228,7 +293,6 @@ async function init() {
             wallpapers = JSON.parse(cached);
             updateStatus("Loaded from Cache");
         }
-        
         document.getElementById('ui-img-count').textContent = wallpapers.length;
         document.getElementById('ui-last-sync').textContent = localStorage.getItem(stampKey);
         transition(wallpapers[0]);
@@ -259,13 +323,15 @@ window.onload = () => {
     document.getElementById('ui-interval').value = config.interval;
     document.getElementById('ui-cache-hours').value = config.cache;
     document.getElementById('ui-unsplash-key').value = config.key;
+    document.getElementById('ui-sleep-mode').checked = config.sleep;
 
     init(); updateWeather();
     setInterval(() => {
         const n = new Date();
-        document.getElementById('datetime').textContent = n.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + "\n" + n.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('datetime').textContent = n.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) + "\n" + n.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }, 1000);
 
+    document.getElementById('ui-sleep-mode').onchange = (e) => { config.sleep = e.target.checked; save(); resetIdleTimer(); };
     document.getElementById('ui-weather-refresh').onclick = updateWeather;
     document.getElementById('ui-refresh').onclick = () => { localStorage.removeItem(`cache_${config.source}_time`); init(); };
     document.getElementById('ui-source').onchange = (e) => { config.source = e.target.value; save(); init(); };
@@ -274,6 +340,7 @@ window.onload = () => {
     document.getElementById('ui-cache-hours').onchange = (e) => { config.cache = parseInt(e.target.value); save(); };
     document.getElementById('ui-unsplash-key').onchange = (e) => { config.key = e.target.value; save(); };
     function save() { localStorage.setItem('web_cfg', JSON.stringify(config)); }
+    resetIdleTimer();
 };
 </script>
 </body>
