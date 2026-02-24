@@ -22,8 +22,8 @@
     #sidebar-toggle:hover { background: rgba(255, 255, 255, 0.2); transform: rotate(45deg); }
 
     /* --- AUTO-HIDE / SLEEP MODE --- */
-    .ui-fade { transition: opacity 1s ease-in-out; opacity: 1; }
-    .hidden-ui { opacity: 0 !important; pointer-events: none; }
+    .ui-fade { transition: opacity 1s ease-in-out, visibility 1s; opacity: 1; visibility: visible; }
+    .hidden-ui { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
 
     /* --- PROGRESS & STATUS --- */
     #progress-container { position: fixed; top: 0; left: 0; width: 100%; height: 3px; background: rgba(255,255,255,0.1); z-index: 1000; opacity: 0; transition: opacity 0.3s; }
@@ -48,9 +48,9 @@
     /* --- SETTINGS SIDEBAR --- */
     #web-settings { 
         position: fixed; top: 0; left: 0; height: 100vh; width: 320px; 
-        background: rgba(15, 15, 15, 0.85); backdrop-filter: blur(20px); 
+        background: rgba(15, 15, 15, 0.9); backdrop-filter: blur(20px); 
         transform: translateX(-100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
-        padding: 80px 25px 30px; box-sizing: border-box; z-index: 200; 
+        padding: 80px 25px 30px; box-sizing: border-box; z-index: 400; 
         overflow-y: auto; cursor: default; border-right: 1px solid rgba(255,255,255,0.1);
     }
     #web-settings.open { transform: translateX(0); }
@@ -58,7 +58,10 @@
     /* Aligned & Justified Layout */
     .setting-group { margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
     .setting-group label { font-size: 11px; color: #aaa; font-weight: 700; text-transform: uppercase; flex: 1; }
-    select, input { width: 60%; padding: 8px; background: rgba(255,255,255,0.05); border: 1px solid #444; color: #fff !important; border-radius: 5px; outline: none; font-size: 13px; }
+    
+    /* Dropdown & Input Styling */
+    select, input { width: 60%; padding: 8px; background: #222; border: 1px solid #444; color: #fff !important; border-radius: 5px; outline: none; font-size: 13px; }
+    select option { background-color: #222; color: #fff; }
     
     /* Toggle Switch */
     .switch { position: relative; display: inline-block; width: 34px; height: 18px; }
@@ -70,7 +73,7 @@
 
     .btn-primary { background: #0078D4; color: white; border: none; padding: 12px; font-weight: bold; width: 100%; cursor: pointer; border-radius: 5px; margin-top: 10px; }
     .btn-secondary { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.1); padding: 8px; font-size: 12px; cursor: pointer; border-radius: 4px; width: 100%; margin-top: 5px; }
-    .btn-control { flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    .btn-control { flex: 1; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
     .info-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 6px; border-left: 3px solid #0078D4; margin-top: 20px; font-size: 13px; }
 </style>
 </head>
@@ -159,8 +162,8 @@
         <p>Last Sync: <b id="ui-last-sync">Never</b></p>
         <p>Batch Size: <b id="ui-img-count">0</b></p>
         <div style="display:flex; gap:8px; margin-top:10px;">
-            <button class="btn-control" onclick="showPrevWallpaper()">◀ Prev</button>
-            <button class="btn-control" onclick="showNextWallpaper()">Next ▶</button>
+            <button class="btn-control" onclick="event.stopPropagation(); showPrevWallpaper()">◀ Prev</button>
+            <button class="btn-control" onclick="event.stopPropagation(); showNextWallpaper()">Next ▶</button>
         </div>
     </div>
 </div>
@@ -177,26 +180,43 @@ const PROXY = "https://api.allorigins.win/raw?url=";
 let wallpapers = [], currentIndex = 0, showingFirst = true, cycleTimer = null, idleTimer = null;
 
 function toggleSidebar(e) {
-    e.stopPropagation();
-    document.getElementById('web-settings').classList.toggle('open');
+    if(e) e.stopPropagation();
+    const panel = document.getElementById('web-settings');
+    panel.classList.toggle('open');
     resetIdleTimer();
 }
-window.onclick = () => document.getElementById('web-settings').classList.remove('open');
+
+window.onclick = function(e) {
+    const panel = document.getElementById('web-settings');
+    if (panel.classList.contains('open')) {
+        panel.classList.remove('open');
+        resetIdleTimer();
+    }
+};
 
 // ==========================================
 // AUTO-HIDE / SLEEP LOGIC
 // ==========================================
 function resetIdleTimer() {
-    const ui = document.querySelectorAll('.ui-fade');
-    ui.forEach(el => el.classList.remove('hidden-ui'));
+    const uiElements = document.querySelectorAll('.ui-fade');
+    
+    // Always show UI on interaction
+    uiElements.forEach(el => el.classList.remove('hidden-ui'));
+    
     clearTimeout(idleTimer);
+
+    // Only set timer if sleep mode is ON and sidebar is CLOSED
     if (config.sleep && !document.getElementById('web-settings').classList.contains('open')) {
         idleTimer = setTimeout(() => {
-            ui.forEach(el => el.classList.add('hidden-ui'));
+            uiElements.forEach(el => el.classList.add('hidden-ui'));
         }, 3000);
     }
 }
-['mousemove', 'mousedown', 'keydown'].forEach(evt => window.addEventListener(evt, resetIdleTimer));
+
+// Attach listeners
+['mousemove', 'mousedown', 'keydown', 'touchstart'].forEach(evt => 
+    window.addEventListener(evt, resetIdleTimer, {passive: true})
+);
 
 function updateStatus(msg, isErr = false) {
     const s = document.getElementById('status'); s.textContent = msg; s.style.opacity = '1';
@@ -331,7 +351,11 @@ window.onload = () => {
         document.getElementById('datetime').textContent = n.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) + "\n" + n.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }, 1000);
 
-    document.getElementById('ui-sleep-mode').onchange = (e) => { config.sleep = e.target.checked; save(); resetIdleTimer(); };
+    document.getElementById('ui-sleep-mode').onchange = (e) => { 
+        config.sleep = e.target.checked; 
+        save(); 
+        resetIdleTimer(); // Refresh the timer state immediately
+    };
     document.getElementById('ui-weather-refresh').onclick = updateWeather;
     document.getElementById('ui-refresh').onclick = () => { localStorage.removeItem(`cache_${config.source}_time`); init(); };
     document.getElementById('ui-source').onchange = (e) => { config.source = e.target.value; save(); init(); };
@@ -340,6 +364,7 @@ window.onload = () => {
     document.getElementById('ui-cache-hours').onchange = (e) => { config.cache = parseInt(e.target.value); save(); };
     document.getElementById('ui-unsplash-key').onchange = (e) => { config.key = e.target.value; save(); };
     function save() { localStorage.setItem('web_cfg', JSON.stringify(config)); }
+    
     resetIdleTimer();
 };
 </script>
