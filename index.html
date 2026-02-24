@@ -3,58 +3,42 @@
 <head>
 <meta charset="UTF-8">
 <title>Ultimate Dynamic Wallpaper</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
     /* --- BASE STYLES --- */
-    html, body {
-        margin: 0; padding: 0; background: black; overflow: hidden;
-        height: 100%; width: 100%; font-family: 'Segoe UI', system-ui, sans-serif; color: #ffffff;
-        cursor: pointer;
-    }
-    #wall1, #wall2 {
-        position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
-        object-fit: cover; opacity: 0; transition: opacity 2s ease-in-out; will-change: opacity;
-        pointer-events: none;
-    }
-    /* --- PROGRESS & OVERLAYS --- */
-    #progress-container {
-        position: fixed; top: 0; left: 0; width: 100%; height: 3px;
-        background: rgba(255,255,255,0.1); z-index: 1000; opacity: 0; transition: opacity 0.3s;
-    }
+    html, body { margin: 0; padding: 0; background: #000; overflow: hidden; height: 100%; width: 100%; font-family: 'Segoe UI', system-ui, sans-serif; color: #fff; cursor: pointer; }
+    #wall1, #wall2 { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: cover; opacity: 0; transition: opacity 2s ease-in-out; will-change: opacity; pointer-events: none; }
+
+    /* --- PROGRESS & STATUS --- */
+    #progress-container { position: fixed; top: 0; left: 0; width: 100%; height: 3px; background: rgba(255,255,255,0.1); z-index: 1000; opacity: 0; transition: opacity 0.3s; }
     #progress-bar { height: 100%; width: 0%; background: #0078D4; transition: width 0.4s ease; }
-    #status {
-        position: fixed; bottom: 20px; left: 20px; color: white;
-        background: rgba(0,0,0,0.8); padding: 12px 18px; border-radius: 8px;
-        font-size: 13px; z-index: 100; opacity: 0; transition: opacity 0.3s ease;
-        border: 1px solid rgba(255,255,255,0.1); pointer-events: none;
-    }
+    #status { position: fixed; bottom: 20px; left: 20px; color: white; background: rgba(0,0,0,0.85); padding: 12px 18px; border-radius: 8px; font-size: 13px; z-index: 100; opacity: 0; transition: opacity 0.3s ease; border: 1px solid rgba(255,255,255,0.1); pointer-events: none; }
+
+    /* --- WEATHER OVERLAY --- */
     #weather-overlay {
         position: fixed; top: 20px; right: 20px; color: white;
-        background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); padding: 20px;
-        border-radius: 12px; z-index: 100; pointer-events: none; text-align: right;
+        background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+        padding: 20px; border-radius: 10px; z-index: 100;
+        font-size: 16px; min-width: 280px; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+        pointer-events: none; text-align: left;
     }
-    #datetime { font-size: 28px; font-weight: 300; margin-bottom: 5px; white-space: pre-line; }
-    #temperature { font-size: 24px; font-weight: bold; opacity: 0.9; }
-    /* --- SETTINGS PANEL --- */
-    #web-settings {
-        position: fixed; top: 0; left: 0; height: 100vh; width: 320px;
-        background: rgba(15, 15, 15, 0.9); backdrop-filter: blur(15px);
-        box-shadow: 5px 0 15px rgba(0,0,0,0.5); z-index: 200;
-        transform: translateX(-310px); transition: transform 0.3s ease;
-        padding: 30px 25px; box-sizing: border-box; overflow-y: auto; cursor: default;
-    }
+    #datetime { font-size: 28px; font-weight: 300; margin-bottom: 10px; white-space: pre-line; }
+    #location { font-size: 14px; margin-bottom: 15px; opacity: 0.9; font-weight: 600; letter-spacing: 0.5px; }
+    #weather-info { display: flex; align-items: center; gap: 15px; }
+    #weather-icon { font-size: 48px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.8)); }
+    #weather-details { display: flex; flex-direction: column; gap: 5px; }
+    #temperature { font-size: 28px; font-weight: bold; }
+    #weather-description { font-size: 14px; opacity: 0.9; white-space: pre-line; }
+
+    /* --- SETTINGS SIDEBAR --- */
+    #web-settings { position: fixed; top: 0; left: 0; height: 100vh; width: 320px; background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(15px); transform: translateX(-310px); transition: transform 0.3s ease; padding: 30px 25px; box-sizing: border-box; z-index: 200; overflow-y: auto; cursor: default; }
     #web-settings:hover { transform: translateX(0); }
-    #web-settings::after { content: "⚙️"; position: absolute; right: 8px; top: 50%; opacity: 0.4; font-size: 18px; }
     .setting-group { margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px; }
-    .setting-group label { font-size: 11px; color: #888; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-    .setting-group select, .setting-group input {
-        width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-        color: white; border-radius: 5px; outline: none; box-sizing: border-box; font-family: inherit;
-    }
+    .setting-group label { font-size: 11px; color: #888; font-weight: 700; text-transform: uppercase; }
+    select, input { width: 100%; padding: 10px; background: #222; border: 1px solid #444; color: #fff !important; border-radius: 5px; outline: none; }
     .btn-primary { background: #0078D4; color: white; border: none; padding: 12px; font-weight: bold; width: 100%; cursor: pointer; border-radius: 5px; margin-top: 10px; }
+    .btn-secondary { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.1); padding: 8px; font-size: 12px; cursor: pointer; border-radius: 4px; margin-top: 5px; }
     .btn-control { flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-    .info-box { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 6px; border-left: 3px solid #0078D4; margin-top: 20px; }
-    .info-box p { margin: 5px 0; font-size: 13px; color: #bbb; }
+    .info-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 6px; border-left: 3px solid #0078D4; margin-top: 20px; font-size: 13px; }
 </style>
 </head>
 <body onclick="showNextWallpaper()">
@@ -65,21 +49,50 @@
 
 <div id="weather-overlay">
     <div id="datetime"></div>
-    <div id="temperature">--°C</div>
+    <div id="location">Detecting Location...</div>
+    <div id="weather-info">
+        <div id="weather-icon">🌤️</div>
+        <div id="weather-details">
+            <div id="temperature">--°C / --°F</div>
+            <div id="weather-description">Loading weather...</div>
+        </div>
+    </div>
 </div>
 
 <div id="web-settings" onclick="event.stopPropagation()">
     <h2 style="font-weight: 300; margin-top: 0;">Settings</h2>
+    
     <div class="setting-group">
-        <label>Image Source</label>
+        <label>Image Provider</label>
         <select id="ui-source">
             <option value="wallhaven">Wallhaven</option>
             <option value="bing">Bing Images</option>
-            <option value="spotlight">Windows Spotlight</option>
             <option value="nasa">NASA APOD</option>
             <option value="unsplash">Unsplash</option>
+            <option value="spotlight">Windows Spotlight</option>
         </select>
     </div>
+
+    <div class="setting-group">
+        <label>Weather Data</label>
+        <button id="ui-weather-refresh" class="btn-secondary">🔄 Refresh Weather & Location</button>
+    </div>
+
+    <div class="setting-group">
+        <label>Auto-Fetch Batch Every</label>
+        <select id="ui-cache-hours">
+            <option value="1">1 Hour</option>
+            <option value="6">6 Hours</option>
+            <option value="12">12 Hours</option>
+            <option value="24">24 Hours</option>
+        </select>
+    </div>
+
+    <div class="setting-group">
+        <label>Cycle Rotation (Minutes)</label>
+        <input type="number" id="ui-interval" min="1" max="60" value="3">
+    </div>
+
     <div id="wallhaven-options" class="setting-group">
         <label>Wallhaven Category</label>
         <select id="ui-category">
@@ -89,11 +102,14 @@
             <option value="111">Everything</option>
         </select>
     </div>
-    <div class="setting-group">
-        <label>Cycle Interval (Minutes)</label>
-        <input type="number" id="ui-interval" min="1" max="60" value="3">
+
+    <div id="unsplash-options" class="setting-group">
+        <label>Unsplash Access Key</label>
+        <input type="text" id="ui-unsplash-key" placeholder="Paste Key Here">
     </div>
+
     <button id="ui-refresh" class="btn-primary">Force Refresh Cache</button>
+
     <div class="info-box">
         <p>Last Sync: <b id="ui-last-sync">Never</b></p>
         <p>Batch Size: <b id="ui-img-count">0</b></p>
@@ -106,33 +122,51 @@
 
 <script>
 // ==========================================
-// 1. STATE & UTILS
+// 1. STATE & CONFIG
 // ==========================================
-let config = JSON.parse(localStorage.getItem('web_wallpaper_config')) || {
-    source: "wallhaven", category: "100", interval: 3, cacheHours: 12, unsplashKey: ""
+let config = JSON.parse(localStorage.getItem('web_cfg')) || { 
+    source: "wallhaven", cat: "100", interval: 3, cache: 12, key: "" 
 };
 
-let currentSource = config.source, currentCategory = config.category;
-let cycleIntervalMinutes = config.interval, cacheDurationMs = config.cacheHours * 3600000;
-let unsplashKey = config.unsplashKey, isLivelyMode = false;
-let wallpaperCycleTimer = null, wallpapers = [], currentImageIndex = 0, showingFirstLayer = true;
-
-const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+const PROXY = "https://api.allorigins.win/raw?url=";
+let wallpapers = [], currentIndex = 0, showingFirst = true, cycleTimer = null;
 
 function updateStatus(msg, isErr = false) {
     const s = document.getElementById('status'); s.textContent = msg; s.style.opacity = '1';
     if (!isErr) setTimeout(() => s.style.opacity = '0', 3000);
 }
 function updateProgress(pct) {
-    const c = document.getElementById('progress-container'), b = document.getElementById('progress-bar');
+    const b = document.getElementById('progress-bar'), c = document.getElementById('progress-container');
     c.style.opacity = (pct > 0 && pct < 100) ? '1' : '0'; b.style.width = pct + '%';
 }
 
 // ==========================================
-// 2. FETCH ENGINE
+// 2. WEATHER ENGINE
+// ==========================================
+const wmoCodes = { 0: ["Clear Sky", "☀️"], 1: ["Mainly Clear", "🌤️"], 2: ["Partly Cloudy", "⛅"], 3: ["Overcast", "☁️"], 45: ["Foggy", "🌫️"], 61: ["Light Rain", "🌧️"], 95: ["Thunderstorm", "⛈️"] };
+
+async function updateWeather() {
+    updateStatus("Updating Weather...");
+    try {
+        const geo = await (await fetch('https://ipapi.co/json/')).json();
+        document.getElementById('location').textContent = `${geo.city}, ${geo.region}`;
+        const w = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${geo.latitude}&longitude=${geo.longitude}&current=temperature_2m,weather_code&temperature_unit=celsius`)).json();
+        const tempC = Math.round(w.current.temperature_2m);
+        const tempF = Math.round((tempC * 9/5) + 32);
+        const [desc, icon] = wmoCodes[w.current.weather_code] || ["Settled", "🌤️"];
+        document.getElementById('temperature').textContent = `${tempC}°C / ${tempF}°F`;
+        document.getElementById('weather-description').textContent = desc;
+        document.getElementById('weather-icon').textContent = icon;
+    } catch (e) {
+        updateStatus("Weather Sync Failed", true);
+    }
+}
+
+// ==========================================
+// 3. FETCH ENGINE
 // ==========================================
 async function safeFetch(url, useProxy = false) {
-    const target = useProxy ? CORS_PROXY + encodeURIComponent(url) : url;
+    const target = useProxy ? PROXY + encodeURIComponent(url) : url;
     updateProgress(30);
     try {
         const r = await fetch(target); if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -142,105 +176,105 @@ async function safeFetch(url, useProxy = false) {
 
 const Providers = {
     wallhaven: async () => {
-        const d = await safeFetch(`https://wallhaven.cc/api/v1/search?categories=${currentCategory}&purity=100&atleast=3840x2160&sorting=random&limit=10`, true);
-        return d.data.map(img => img.path);
+        const d = await safeFetch(`https://wallhaven.cc/api/v1/search?categories=${config.cat}&purity=100&atleast=1920x1080&sorting=random`, true);
+        return d.data.map(i => i.path);
     },
     bing: async () => {
-        const d = await safeFetch('https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=8', true);
+        const d = await safeFetch("https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=8", true);
         return d.images.map(i => "https://www.bing.com" + i.url);
     },
     nasa: async () => {
         const d = await safeFetch(`https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&count=5`, false);
-        return d.filter(i => i.media_type === 'image').map(i => i.hdurl || i.url);
+        return d.filter(i => i.media_type === "image").map(i => i.hdurl || i.url);
+    },
+    unsplash: async () => {
+        if (!config.key) throw new Error("Key Required");
+        const d = await safeFetch(`https://api.unsplash.com/photos/random?orientation=landscape&count=5&client_id=${config.key}`, false);
+        return d.map(i => i.urls.full);
     },
     spotlight: async () => {
         const d = await safeFetch('https://arc.msn.com/v3/Delivery/Placement?pid=209567&fmt=json', true);
-        const urls = []; d.batchrsp?.items?.forEach(i => { try { const inner = JSON.parse(i.item); const link = inner.ad?.image_fullscreen_001_landscape?.u; if (link) urls.push(link); } catch(e){} });
-        return urls;
-    },
-    unsplash: async () => {
-        if (!unsplashKey) return ["https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=3840&q=80"];
-        const d = await safeFetch(`https://api.unsplash.com/photos/random?orientation=landscape&count=5&client_id=${unsplashKey}`, false);
-        return d.map(i => i.urls.full);
+        const urls = []; d.batchrsp?.items?.forEach(i => { try { const inner = JSON.parse(i.item); urls.push(inner.ad?.image_fullscreen_001_landscape?.u); } catch(e){} });
+        return urls.filter(u => u);
     }
 };
 
 // ==========================================
-// 3. CORE LOGIC
+// 4. CORE ENGINE
 // ==========================================
-async function initWallpapers() {
-    updateStatus(`Syncing ${currentSource}...`);
-    const now = Date.now(), cKey = `cache_${currentSource}_images`, tKey = `cache_${currentSource}_time`, sKey = `cache_${currentSource}_stamp`;
-    const cached = localStorage.getItem(cKey), cTime = localStorage.getItem(tKey);
-    const isStale = !cTime || (now - parseInt(cTime) > cacheDurationMs);
+async function init() {
+    updateStatus(`Syncing ${config.source}...`);
+    document.getElementById('wallhaven-options').style.display = (config.source === 'wallhaven') ? 'flex' : 'none';
+    document.getElementById('unsplash-options').style.display = (config.source === 'unsplash') ? 'flex' : 'none';
 
-    document.getElementById('wallhaven-options').style.display = (currentSource === 'wallhaven') ? 'flex' : 'none';
+    const now = Date.now();
+    const cacheKey = `cache_${config.source}_imgs`;
+    const timeKey = `cache_${config.source}_time`;
+    const stampKey = `cache_${config.source}_stamp`;
+
+    const cached = localStorage.getItem(cacheKey);
+    const cachedTime = localStorage.getItem(timeKey);
+    const isStale = !cachedTime || (now - parseInt(cachedTime) > (config.cache * 3600000));
 
     try {
-        if (isStale) {
-            wallpapers = await Providers[currentSource]();
+        if (isStale || !cached) {
+            wallpapers = await Providers[config.source]();
             const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            localStorage.setItem(cKey, JSON.stringify(wallpapers));
-            localStorage.setItem(tKey, now.toString());
-            localStorage.setItem(sKey, timeStr);
-        } else { wallpapers = JSON.parse(cached); }
-        updateUIInfo(localStorage.getItem(sKey), wallpapers.length);
-        transitionWallpaper(wallpapers[0]);
-    } catch (e) {
-        updateStatus(`Sync Error: ${e.message}`, true); updateProgress(0);
-        if (cached) { wallpapers = JSON.parse(cached); transitionWallpaper(wallpapers[0]); }
-    }
+            localStorage.setItem(cacheKey, JSON.stringify(wallpapers));
+            localStorage.setItem(timeKey, now.toString());
+            localStorage.setItem(stampKey, timeStr);
+            updateStatus("Fresh Batch Loaded");
+        } else {
+            wallpapers = JSON.parse(cached);
+            updateStatus("Loaded from Cache");
+        }
+        
+        document.getElementById('ui-img-count').textContent = wallpapers.length;
+        document.getElementById('ui-last-sync').textContent = localStorage.getItem(stampKey);
+        transition(wallpapers[0]);
+    } catch (e) { updateStatus(`Error: ${e.message}`, true); updateProgress(0); }
 }
 
-function transitionWallpaper(url) {
+function transition(url) {
     updateProgress(75); const p = new Image();
     p.onload = () => {
-        updateProgress(100); const w1 = document.getElementById("wall1"), w2 = document.getElementById("wall2");
-        if (showingFirstLayer) { w2.src = url; w2.style.opacity = 1; w1.style.opacity = 0; }
+        updateProgress(100); const w1 = document.getElementById('wall1'), w2 = document.getElementById('wall2');
+        if (showingFirst) { w2.src = url; w2.style.opacity = 1; w1.style.opacity = 0; }
         else { w1.src = url; w1.style.opacity = 1; w2.style.opacity = 0; }
-        showingFirstLayer = !showingFirstLayer; resetWallpaperTimer();
+        showingFirst = !showingFirst; resetTimer();
     };
-    p.onerror = () => { updateStatus("Image Load Failed", true); updateProgress(0); };
     p.src = url;
 }
 
-function showNextWallpaper() { if (wallpapers.length) { currentImageIndex = (currentImageIndex + 1) % wallpapers.length; transitionWallpaper(wallpapers[currentImageIndex]); } }
-function showPrevWallpaper() { if (wallpapers.length) { currentImageIndex = (currentImageIndex - 1 + wallpapers.length) % wallpapers.length; transitionWallpaper(wallpapers[currentImageIndex]); } }
-function resetWallpaperTimer() { if (wallpaperCycleTimer) clearInterval(wallpaperCycleTimer); wallpaperCycleTimer = setInterval(showNextWallpaper, cycleIntervalMinutes * 60000); }
+function showNextWallpaper() { if (wallpapers.length) { currentIndex = (currentIndex + 1) % wallpapers.length; transition(wallpapers[currentIndex]); } }
+function showPrevWallpaper() { if (wallpapers.length) { currentIndex = (currentIndex - 1 + wallpapers.length) % wallpapers.length; transition(wallpapers[currentIndex]); } }
+function resetTimer() { if (cycleTimer) clearInterval(cycleTimer); cycleTimer = setInterval(showNextWallpaper, config.interval * 60000); }
 
 // ==========================================
-// 4. LIVELY & BOOT
+// 5. BOOT
 // ==========================================
-function updateUIInfo(stamp, count) { document.getElementById('ui-last-sync').textContent = stamp || "Never"; document.getElementById('ui-img-count').textContent = count || "0"; }
-function updateDateTime() {
-    const n = new Date(); document.getElementById('datetime').textContent = n.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + "\n" + n.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-}
-async function getWeather() {
-    try {
-        const g = await (await fetch('https://ipapi.co/json/')).json();
-        const w = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${g.latitude}&longitude=${g.longitude}&current=temperature_2m&temperature_unit=celsius`)).json();
-        document.getElementById('temperature').textContent = `${Math.round(w.current.temperature_2m)}°C`;
-    } catch (e) {}
-}
+window.onload = () => {
+    document.getElementById('ui-source').value = config.source;
+    document.getElementById('ui-category').value = config.cat;
+    document.getElementById('ui-interval').value = config.interval;
+    document.getElementById('ui-cache-hours').value = config.cache;
+    document.getElementById('ui-unsplash-key').value = config.key;
 
-function livelyPropertyListener(name, val) {
-    if (!isLivelyMode) { isLivelyMode = true; document.getElementById('web-settings').style.opacity = '0.1'; document.getElementById('web-settings').style.pointerEvents = 'none'; }
-    let r = false;
-    switch(name) {
-        case "imageSource": const s = ["wallhaven", "bing", "spotlight", "nasa", "unsplash"]; currentSource = s[val]; r = true; break;
-        case "wallhavenCategory": const c = ["100", "010", "001", "111"]; currentCategory = c[val]; if (currentSource === "wallhaven") r = true; break;
-        case "bgInterval": cycleIntervalMinutes = val; resetWallpaperTimer(); break;
-        case "cacheHours": cacheDurationMs = val * 3600000; break;
-        case "unsplashKey": unsplashKey = val; if (currentSource === "unsplash") r = true; break;
-        case "forceRefresh": r = true; break;
-    }
-    if (r) { localStorage.removeItem(`cache_${currentSource}_time`); initWallpapers(); }
-}
+    init(); updateWeather();
+    setInterval(() => {
+        const n = new Date();
+        document.getElementById('datetime').textContent = n.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + "\n" + n.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    }, 1000);
 
-initWallpapers(); updateDateTime(); setInterval(updateDateTime, 1000); getWeather(); setInterval(getWeather, 1800000);
-document.getElementById('ui-refresh').onclick = () => { localStorage.removeItem(`cache_${currentSource}_time`); initWallpapers(); };
-document.getElementById('ui-source').onchange = (e) => { currentSource = e.target.value; localStorage.removeItem(`cache_${currentSource}_time`); initWallpapers(); };
-document.getElementById('ui-category').onchange = (e) => { currentCategory = e.target.value; localStorage.removeItem(`cache_${currentSource}_time`); initWallpapers(); };
+    document.getElementById('ui-weather-refresh').onclick = updateWeather;
+    document.getElementById('ui-refresh').onclick = () => { localStorage.removeItem(`cache_${config.source}_time`); init(); };
+    document.getElementById('ui-source').onchange = (e) => { config.source = e.target.value; save(); init(); };
+    document.getElementById('ui-category').onchange = (e) => { config.cat = e.target.value; save(); init(); };
+    document.getElementById('ui-interval').onchange = (e) => { config.interval = e.target.value; save(); resetTimer(); };
+    document.getElementById('ui-cache-hours').onchange = (e) => { config.cache = parseInt(e.target.value); save(); };
+    document.getElementById('ui-unsplash-key').onchange = (e) => { config.key = e.target.value; save(); };
+    function save() { localStorage.setItem('web_cfg', JSON.stringify(config)); }
+};
 </script>
 </body>
 </html>
