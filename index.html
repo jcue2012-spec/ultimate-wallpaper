@@ -5,13 +5,35 @@
 <title>Ultimate Dynamic Wallpaper</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-    /* --- BASE STYLES --- */
-    html, body { margin: 0; padding: 0; background: #000; overflow: hidden; height: 100%; width: 100%; font-family: 'Segoe UI', system-ui, sans-serif; color: #fff; cursor: pointer; }
+	/* --- BASE STYLES --- */
+    html, body { 
+        margin: 0; padding: 0; 
+        
+        /* 1. The Fallback Gradient (Added a 4th color for a wider pan) */
+        background: linear-gradient(-45deg, #0f2027, #203a43, #2a5298, #0f2027);
+        
+        /* 2. Stretch it to 4x the size of the screen */
+        background-size: 400% 400%;
+        
+        /* 3. Apply the panning animation (15 seconds, smooth ease, loop forever) */
+        animation: smoothGradient 15s ease infinite;
+        
+        overflow: hidden; height: 100%; width: 100%; 
+        font-family: 'Segoe UI', system-ui, sans-serif; color: #fff; cursor: pointer; 
+    }
+
+    /* --- FALLBACK ANIMATION --- */
+    @keyframes smoothGradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
     #wall1, #wall2 { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: cover; opacity: 0; transition: opacity 2s ease-in-out; will-change: opacity; pointer-events: none; }
 
     /* --- GLASSMORPHISM GEAR TOGGLE --- */
     #sidebar-toggle {
-        position: fixed; top: 20px; left: 20px; z-index: 300;
+        position: fixed; top: 20px; left: 20px; z-index: 500; 
         width: 45px; height: 45px; border-radius: 12px;
         background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.2); color: white;
@@ -19,6 +41,9 @@
         cursor: pointer; transition: all 0.5s ease;
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
     }
+
+    #sidebar-toggle.active { transform: rotate(90deg); opacity: 0.4; box-shadow: none; background: transparent; border-color: transparent; }
+    #sidebar-toggle.active:hover { opacity: 1; transform: rotate(135deg); }
     #sidebar-toggle:hover { background: rgba(255, 255, 255, 0.2); transform: rotate(45deg); }
 
     /* --- AUTO-HIDE / SLEEP MODE --- */
@@ -55,16 +80,13 @@
     }
     #web-settings.open { transform: translateX(0); }
 
-    /* Aligned & Justified Layout */
     .setting-group { margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-    .setting-group label { font-size: 11px; color: #aaa; font-weight: 700; text-transform: uppercase; flex: 1; }
+    .setting-group label:not(.switch) { font-size: 11px; color: #aaa; font-weight: 700; text-transform: uppercase; flex: 1; }
     
-    /* Dropdown & Input Styling */
     select, input { width: 60%; padding: 8px; background: #222; border: 1px solid #444; color: #fff !important; border-radius: 5px; outline: none; font-size: 13px; }
     select option { background-color: #222; color: #fff; }
     
-    /* Toggle Switch */
-    .switch { position: relative; display: inline-block; width: 34px; height: 18px; }
+    .switch { position: relative; display: inline-block; width: 34px; height: 18px; flex: none; }
     .switch input { opacity: 0; width: 0; height: 0; }
     .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 20px; }
     .slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
@@ -72,8 +94,38 @@
     input:checked + .slider:before { transform: translateX(16px); }
 
     .btn-primary { background: #0078D4; color: white; border: none; padding: 12px; font-weight: bold; width: 100%; cursor: pointer; border-radius: 5px; margin-top: 10px; }
-    .btn-secondary { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.1); padding: 8px; font-size: 12px; cursor: pointer; border-radius: 4px; width: 100%; margin-top: 5px; }
-    .btn-control { flex: 1; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    
+    /* NEW: Glassmorphic secondary button with flex alignment for the icon */
+    .btn-secondary { 
+        background: rgba(255, 255, 255, 0.05); 
+        color: #ccc; 
+        border: 1px solid rgba(255, 255, 255, 0.1); 
+        padding: 10px; 
+        font-size: 12px; 
+        cursor: pointer; 
+        border-radius: 6px; 
+        width: 100%; 
+        margin-top: 10px; 
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .btn-secondary:active { transform: scale(0.98); }
+
+    /* NEW: Loading spinner class for the FontAwesome icon */
+    .is-spinning { animation: spin 1s linear infinite; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    .btn-control { flex: 1; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 10px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: opacity 0.3s; }
+    .btn-control:disabled { opacity: 0.3; cursor: not-allowed; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
     .info-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 6px; border-left: 3px solid #0078D4; margin-top: 20px; font-size: 13px; }
 </style>
 </head>
@@ -122,11 +174,6 @@
     </div>
 
     <div class="setting-group">
-        <label>Weather Data</label>
-        <button id="ui-weather-refresh" class="btn-secondary">🔄 Refresh Weather & Location</button>
-    </div>
-
-    <div class="setting-group">
         <label>Auto-Fetch Batch Every</label>
         <select id="ui-cache-hours">
             <option value="1">1 Hour</option>
@@ -136,8 +183,13 @@
         </select>
     </div>
 
+    <div id="batch-size-options" class="setting-group">
+        <label>Batch Size</label>
+        <input type="number" id="ui-batch-size" min="1" max="50">
+    </div>
+
     <div class="setting-group">
-        <label>Cycle Rotation (Minutes)</label>
+        <label>Cycle Rotation (Mins)</label>
         <input type="number" id="ui-interval" min="1" max="60">
     </div>
 
@@ -156,14 +208,19 @@
         <input type="text" id="ui-unsplash-key" placeholder="Paste Key Here">
     </div>
 
+    <button id="ui-apply" class="btn-primary" style="background: #28a745; margin-top: 25px;">Apply Changes</button>
     <button id="ui-refresh" class="btn-primary">Force Refresh Cache</button>
+    
+    <button id="ui-weather-refresh" class="btn-secondary">
+        <i class="fas fa-sync-alt"></i> Refresh Weather & Location
+    </button>
 
     <div class="info-box">
         <p>Last Sync: <b id="ui-last-sync">Never</b></p>
         <p>Batch Size: <b id="ui-img-count">0</b></p>
         <div style="display:flex; gap:8px; margin-top:10px;">
-            <button class="btn-control" onclick="event.stopPropagation(); showPrevWallpaper()">◀ Prev</button>
-            <button class="btn-control" onclick="event.stopPropagation(); showNextWallpaper()">Next ▶</button>
+            <button id="ui-btn-prev" class="btn-control" onclick="event.stopPropagation(); showPrevWallpaper()">◀ Prev</button>
+            <button id="ui-btn-next" class="btn-control" onclick="event.stopPropagation(); showNextWallpaper()">Next ▶</button>
         </div>
     </div>
 </div>
@@ -173,8 +230,11 @@
 // 1. STATE & CONFIG
 // ==========================================
 let config = JSON.parse(localStorage.getItem('web_cfg')) || { 
-    source: "wallhaven", cat: "100", interval: 3, cache: 12, key: "", sleep: true 
+    source: "wallhaven", cat: "100", interval: 3, cache: 12, key: "", sleep: true, batchSize: 24 
 };
+
+const providerDefaults = { bing: 8, nasa: 10, unsplash: 15 };
+const supportsBatchSize = ['bing', 'nasa', 'unsplash'];
 
 const PROXY = "https://api.allorigins.win/raw?url=";
 let wallpapers = [], currentIndex = 0, showingFirst = true, cycleTimer = null, idleTimer = null;
@@ -182,14 +242,18 @@ let wallpapers = [], currentIndex = 0, showingFirst = true, cycleTimer = null, i
 function toggleSidebar(e) {
     if(e) e.stopPropagation();
     const panel = document.getElementById('web-settings');
+    const btn = document.getElementById('sidebar-toggle'); 
     panel.classList.toggle('open');
+    btn.classList.toggle('active'); 
     resetIdleTimer();
 }
 
 window.onclick = function(e) {
     const panel = document.getElementById('web-settings');
+    const btn = document.getElementById('sidebar-toggle'); 
     if (panel.classList.contains('open')) {
         panel.classList.remove('open');
+        btn.classList.remove('active'); 
         resetIdleTimer();
     }
 };
@@ -199,21 +263,13 @@ window.onclick = function(e) {
 // ==========================================
 function resetIdleTimer() {
     const uiElements = document.querySelectorAll('.ui-fade');
-    
-    // Always show UI on interaction
     uiElements.forEach(el => el.classList.remove('hidden-ui'));
-    
     clearTimeout(idleTimer);
-
-    // Only set timer if sleep mode is ON and sidebar is CLOSED
     if (config.sleep && !document.getElementById('web-settings').classList.contains('open')) {
-        idleTimer = setTimeout(() => {
-            uiElements.forEach(el => el.classList.add('hidden-ui'));
-        }, 3000);
+        idleTimer = setTimeout(() => { uiElements.forEach(el => el.classList.add('hidden-ui')); }, 3000);
     }
 }
 
-// Attach listeners
 ['mousemove', 'mousedown', 'keydown', 'touchstart'].forEach(evt => 
     window.addEventListener(evt, resetIdleTimer, {passive: true})
 );
@@ -222,29 +278,52 @@ function updateStatus(msg, isErr = false) {
     const s = document.getElementById('status'); s.textContent = msg; s.style.opacity = '1';
     if (!isErr) setTimeout(() => s.style.opacity = '0', 3000);
 }
+
 function updateProgress(pct) {
     const b = document.getElementById('progress-bar'), c = document.getElementById('progress-container');
     c.style.opacity = (pct > 0 && pct < 100) ? '1' : '0'; b.style.width = pct + '%';
 }
 
+function updateNavigationButtons() {
+    const prevBtn = document.getElementById('ui-btn-prev');
+    const nextBtn = document.getElementById('ui-btn-next');
+    const shouldDisable = wallpapers.length <= 1;
+    prevBtn.disabled = shouldDisable;
+    nextBtn.disabled = shouldDisable;
+}
+
+function toggleContextualSettings(source) {
+    document.getElementById('wallhaven-options').style.display = (source === 'wallhaven') ? 'flex' : 'none';
+    document.getElementById('unsplash-options').style.display = (source === 'unsplash') ? 'flex' : 'none';
+    document.getElementById('batch-size-options').style.display = supportsBatchSize.includes(source) ? 'flex' : 'none';
+}
+
 // ==========================================
-// 2. WEATHER ENGINE
+// 2. WEATHER ENGINE (Updated with animation hook)
 // ==========================================
 const wmoCodes = { 0: ["Clear Sky", "☀️"], 1: ["Mainly Clear", "🌤️"], 2: ["Partly Cloudy", "⛅"], 3: ["Overcast", "☁️"], 45: ["Foggy", "🌫️"], 61: ["Light Rain", "🌧️"], 95: ["Thunderstorm", "⛈️"] };
 
 async function updateWeather() {
     updateStatus("Updating Weather...");
+    const icon = document.querySelector('#ui-weather-refresh i');
+    
+    if (icon) icon.classList.add('is-spinning'); // Start animation
+    
     try {
         const geo = await (await fetch('https://ipapi.co/json/')).json();
         document.getElementById('location').textContent = `${geo.city}, ${geo.region}`;
         const w = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${geo.latitude}&longitude=${geo.longitude}&current=temperature_2m,weather_code&temperature_unit=celsius`)).json();
         const tempC = Math.round(w.current.temperature_2m);
         const tempF = Math.round((tempC * 9/5) + 32);
-        const [desc, icon] = wmoCodes[w.current.weather_code] || ["Settled", "🌤️"];
+        const [desc, weatherIcon] = wmoCodes[w.current.weather_code] || ["Settled", "🌤️"];
         document.getElementById('temperature').textContent = `${tempC}°C / ${tempF}°F`;
         document.getElementById('weather-description').textContent = desc;
-        document.getElementById('weather-icon').textContent = icon;
-    } catch (e) { updateStatus("Weather Sync Failed", true); }
+        document.getElementById('weather-icon').textContent = weatherIcon;
+    } catch (e) { 
+        updateStatus("Weather Sync Failed", true); 
+    } finally {
+        if (icon) icon.classList.remove('is-spinning'); // Stop animation
+    }
 }
 
 // ==========================================
@@ -252,45 +331,60 @@ async function updateWeather() {
 // ==========================================
 async function safeFetch(url, useProxy = false) {
     const target = useProxy ? PROXY + encodeURIComponent(url) : url;
-    updateProgress(30);
     try {
         const r = await fetch(target); if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        updateProgress(60); return await r.json();
+        return await r.json();
     } catch (e) { throw new Error(e.message); }
 }
 
 const Providers = {
     wallhaven: async () => {
         const d = await safeFetch(`https://wallhaven.cc/api/v1/search?categories=${config.cat}&purity=100&atleast=1920x1080&sorting=random`, true);
-        return d.data.map(i => i.path);
+        return d.data.map(i => i.path); 
     },
     bing: async () => {
-        const d = await safeFetch("https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=8", true);
+        const count = Math.min(config.batchSize, 8); 
+        const d = await safeFetch(`https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=${count}`, true);
         return d.images.map(i => "https://www.bing.com" + i.url);
     },
     nasa: async () => {
-        const d = await safeFetch(`https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&count=5`, false);
+        const count = Math.min(config.batchSize, 50);
+        const d = await safeFetch(`https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&count=${count}`, false);
         return d.filter(i => i.media_type === "image").map(i => i.hdurl || i.url);
     },
     unsplash: async () => {
         if (!config.key) throw new Error("Key Required");
-        const d = await safeFetch(`https://api.unsplash.com/photos/random?orientation=landscape&count=5&client_id=${config.key}`, false);
+        const count = Math.min(config.batchSize, 30); 
+        const d = await safeFetch(`https://api.unsplash.com/photos/random?orientation=landscape&count=${count}&client_id=${config.key}`, false);
         return d.map(i => i.urls.full);
     },
     spotlight: async () => {
         const d = await safeFetch('https://arc.msn.com/v3/Delivery/Placement?pid=209567&fmt=json', true);
         const urls = []; d.batchrsp?.items?.forEach(i => { try { const inner = JSON.parse(i.item); urls.push(inner.ad?.image_fullscreen_001_landscape?.u); } catch(e){} });
-        return urls.filter(u => u);
+        return urls.filter(u => u); 
     }
 };
 
 // ==========================================
-// 4. CORE ENGINE
+// 4. CORE ENGINE & PROGRESS PRELOADER
 // ==========================================
+function preloadBatchWithProgress(urls) {
+    if (urls.length <= 1) return; 
+    let loadedCount = 0; const total = urls.length;
+    updateProgress(5); 
+    urls.forEach((url) => {
+        const img = new Image();
+        img.onload = img.onerror = () => {
+            loadedCount++; updateProgress((loadedCount / total) * 100);
+            if (loadedCount === total) setTimeout(() => updateProgress(0), 500); 
+        };
+        img.src = url;
+    });
+}
+
 async function init() {
     updateStatus(`Syncing ${config.source}...`);
-    document.getElementById('wallhaven-options').style.display = (config.source === 'wallhaven') ? 'flex' : 'none';
-    document.getElementById('unsplash-options').style.display = (config.source === 'unsplash') ? 'flex' : 'none';
+    toggleContextualSettings(config.source);
 
     const now = Date.now();
     const cacheKey = `cache_${config.source}_imgs`;
@@ -313,16 +407,37 @@ async function init() {
             wallpapers = JSON.parse(cached);
             updateStatus("Loaded from Cache");
         }
+        
+        currentIndex = 0;
         document.getElementById('ui-img-count').textContent = wallpapers.length;
         document.getElementById('ui-last-sync').textContent = localStorage.getItem(stampKey);
-        transition(wallpapers[0]);
-    } catch (e) { updateStatus(`Error: ${e.message}`, true); updateProgress(0); }
+        updateNavigationButtons(); 
+
+        if (wallpapers.length > 0) {
+            transition(wallpapers[0]); 
+            if (isStale || !cached) preloadBatchWithProgress(wallpapers);
+        }
+	} catch (e) { 
+        updateStatus("Offline: Using Fallback Background", true); 
+        updateProgress(0); 
+        
+        // Hide images so the animated CSS gradient is visible
+        document.getElementById('wall1').style.opacity = 0;
+        document.getElementById('wall2').style.opacity = 0;
+        
+        // Empty the array and disable the Prev/Next buttons
+        wallpapers = [];
+        updateNavigationButtons();
+        
+        // Stop the auto-rotation timer
+        if (cycleTimer) clearInterval(cycleTimer);
+    }
 }
 
 function transition(url) {
-    updateProgress(75); const p = new Image();
+    const p = new Image();
     p.onload = () => {
-        updateProgress(100); const w1 = document.getElementById('wall1'), w2 = document.getElementById('wall2');
+        const w1 = document.getElementById('wall1'), w2 = document.getElementById('wall2');
         if (showingFirst) { w2.src = url; w2.style.opacity = 1; w1.style.opacity = 0; }
         else { w1.src = url; w1.style.opacity = 1; w2.style.opacity = 0; }
         showingFirst = !showingFirst; resetTimer();
@@ -330,8 +445,8 @@ function transition(url) {
     p.src = url;
 }
 
-function showNextWallpaper() { if (wallpapers.length) { currentIndex = (currentIndex + 1) % wallpapers.length; transition(wallpapers[currentIndex]); } }
-function showPrevWallpaper() { if (wallpapers.length) { currentIndex = (currentIndex - 1 + wallpapers.length) % wallpapers.length; transition(wallpapers[currentIndex]); } }
+function showNextWallpaper() { if (wallpapers.length > 1) { currentIndex = (currentIndex + 1) % wallpapers.length; transition(wallpapers[currentIndex]); } }
+function showPrevWallpaper() { if (wallpapers.length > 1) { currentIndex = (currentIndex - 1 + wallpapers.length) % wallpapers.length; transition(wallpapers[currentIndex]); } }
 function resetTimer() { if (cycleTimer) clearInterval(cycleTimer); cycleTimer = setInterval(showNextWallpaper, config.interval * 60000); }
 
 // ==========================================
@@ -344,6 +459,10 @@ window.onload = () => {
     document.getElementById('ui-cache-hours').value = config.cache;
     document.getElementById('ui-unsplash-key').value = config.key;
     document.getElementById('ui-sleep-mode').checked = config.sleep;
+    
+    if (supportsBatchSize.includes(config.source)) {
+        document.getElementById('ui-batch-size').value = config.batchSize || providerDefaults[config.source];
+    }
 
     init(); updateWeather();
     setInterval(() => {
@@ -352,19 +471,40 @@ window.onload = () => {
     }, 1000);
 
     document.getElementById('ui-sleep-mode').onchange = (e) => { 
-        config.sleep = e.target.checked; 
-        save(); 
-        resetIdleTimer(); // Refresh the timer state immediately
+        config.sleep = e.target.checked; save(); resetIdleTimer();
     };
+    
     document.getElementById('ui-weather-refresh').onclick = updateWeather;
     document.getElementById('ui-refresh').onclick = () => { localStorage.removeItem(`cache_${config.source}_time`); init(); };
-    document.getElementById('ui-source').onchange = (e) => { config.source = e.target.value; save(); init(); };
-    document.getElementById('ui-category').onchange = (e) => { config.cat = e.target.value; save(); init(); };
-    document.getElementById('ui-interval').onchange = (e) => { config.interval = e.target.value; save(); resetTimer(); };
-    document.getElementById('ui-cache-hours').onchange = (e) => { config.cache = parseInt(e.target.value); save(); };
-    document.getElementById('ui-unsplash-key').onchange = (e) => { config.key = e.target.value; save(); };
-    function save() { localStorage.setItem('web_cfg', JSON.stringify(config)); }
     
+    document.getElementById('ui-source').onchange = (e) => { 
+        config.source = e.target.value; 
+        toggleContextualSettings(config.source);
+        if (supportsBatchSize.includes(config.source)) {
+            const idealSize = providerDefaults[config.source];
+            config.batchSize = idealSize;
+            document.getElementById('ui-batch-size').value = idealSize;
+        }
+    };
+
+    document.getElementById('ui-category').onchange = (e) => { config.cat = e.target.value; };
+    document.getElementById('ui-interval').onchange = (e) => { config.interval = e.target.value; };
+    document.getElementById('ui-cache-hours').onchange = (e) => { config.cache = parseInt(e.target.value); };
+    document.getElementById('ui-unsplash-key').onchange = (e) => { config.key = e.target.value; };
+    document.getElementById('ui-batch-size').onchange = (e) => { 
+        config.batchSize = parseInt(e.target.value) || providerDefaults[config.source]; 
+    };
+    
+    document.getElementById('ui-apply').onclick = () => {
+        save();         
+        resetTimer();   
+        localStorage.removeItem(`cache_${config.source}_time`); 
+        init();         
+        document.getElementById('web-settings').classList.remove('open');
+        resetIdleTimer();
+    };
+
+    function save() { localStorage.setItem('web_cfg', JSON.stringify(config)); }
     resetIdleTimer();
 };
 </script>
